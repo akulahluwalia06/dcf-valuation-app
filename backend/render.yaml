@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: dcf-valuation-api
+    env: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: dcf-mongodb
+          property: connectionString
+      - key: FMP_API_KEY
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+    healthCheckPath: /health

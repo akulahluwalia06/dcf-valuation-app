@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "DCF Valuation",
+    "slug": "dcf-valuation-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0D1B2A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.akulahluwalia.dcfvaluation"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1B2A"
+      },
+      "package": "com.akulahluwalia.dcfvaluation"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"],
+    "scheme": "dcfvaluation",
+    "extra": {
+      "router": { "origin": false }
+    }
+  }
+}

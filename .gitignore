@@ -1,10 +1,39 @@
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Environment / secrets — never commit these
 .env
 .env.local
-.DS_Store
+.env.*.local
+.env.production
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output
 dist/
 build/
 .expo/
+web-build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
 coverage/
+.nyc_output/
+
+# Misc
 .cache/
+.turbo/
+*.tsbuildinfo

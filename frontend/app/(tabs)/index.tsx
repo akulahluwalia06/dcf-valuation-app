@@ -83,7 +83,7 @@ export default function HomeScreen() {
       {recent.length > 0 && (
         <>
           <Text style={s.sectionLabel}>RECENTLY MODELED</Text>
-          {recent.map((m, i) => (
+          {recent.map((m: any, i: number) => (
             <View key={m._id || i} style={s.recentRow}>
               <View style={s.recentTicker}><Text style={s.recentTickerText}>{m.ticker}</Text></View>
               <View style={{ flex: 1 }}>

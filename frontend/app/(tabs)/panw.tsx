@@ -234,7 +234,9 @@ function DCFEngineTab({ m }: { m: PANWModel }) {
 function WACCTab({ m }: { m: PANWModel }) {
   const a = m.assumptions;
   const ke = a.wacc; // simplified display
-  const rows = [
+  type WACCItem = { label: string; val: string; note?: string; highlight?: boolean; big?: boolean };
+  type WACCSection = { section: string; items: WACCItem[] };
+  const rows: WACCSection[] = [
     { section: 'COST OF EQUITY (CAPM)', items: [
       { label: 'Risk-Free Rate (Rf)', val: fmtPct(0.043), note: '10yr UST Feb 2026' },
       { label: 'Equity Beta (β)', val: '1.30', note: '5yr monthly vs NASDAQ' },
@@ -387,7 +389,8 @@ function BridgeTab({ m }: { m: PANWModel }) {
   const a = m.assumptions;
   const blended = (d.terminalValues.pvGGM + d.terminalValues.pvExit) / 2;
 
-  const rows = [
+  type BridgeRow = { label: string; val: string; indent: boolean; bold?: boolean; highlight?: boolean; big?: boolean };
+  const rows: BridgeRow[] = [
     { label: 'Sum of PV FCFFs (Yrs 1–7)', val: fmtM(d.pvFCFFs), indent: false },
     { label: '(+) PV Terminal Value — GGM', val: fmtM(d.terminalValues.pvGGM), indent: true },
     { label: '(+) PV Terminal Value — Exit Mult.', val: fmtM(d.terminalValues.pvExit), indent: true },

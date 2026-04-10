@@ -86,7 +86,7 @@ export default function DCFToolScreen() {
         <TextInput
           style={s.searchInput}
           value={inputTicker}
-          onChangeText={t => setInputTicker(t.toUpperCase())}
+          onChangeText={(t: string) => setInputTicker(t.toUpperCase())}
           placeholder="Enter ticker (e.g. AAPL, MSFT, NVDA)"
           placeholderTextColor="#475569"
           autoCapitalize="characters"

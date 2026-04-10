@@ -27,21 +27,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="panw"
         options={{
           title: 'PANW',
-          tabBarIcon: ({ color, size }) => <Ionicons name="analytics-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="analytics-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="dcf"
         options={{
           title: 'DCF Tool',
-          tabBarIcon: ({ color, size }) => <Ionicons name="calculator-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => <Ionicons name="calculator-outline" size={size} color={color} />,
         }}
       />
     </Tabs>

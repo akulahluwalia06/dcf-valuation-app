@@ -159,7 +159,7 @@ export default function DCFToolScreen() {
           style={s.searchInput}
           value={inputTicker}
           onChangeText={(t: string) => setInputTicker(t.toUpperCase())}
-          placeholder="AAPL  MSFT  NVDA  GOOGL  TSLA  META..."
+          placeholder="AAPL  SHOP.TO  NVDA  RY.TO  TSLA  META..."
           placeholderTextColor="#4a7a5a"
           autoCapitalize="characters"
           autoCorrect={false}
@@ -177,7 +177,7 @@ export default function DCFToolScreen() {
       {/* Quick picks */}
       {!snapshot && !snapshotLoading && (
         <View style={s.quickRow}>
-          {['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META', 'TSLA', 'AMZN'].map(t => (
+          {['AAPL', 'MSFT', 'NVDA', 'SHOP.TO', 'META', 'RY.TO', 'AMZN'].map(t => (
             <TouchableOpacity key={t} style={s.quickChip} onPress={() => { setInputTicker(t); }}>
               <Text style={s.quickText}>{t}</Text>
             </TouchableOpacity>

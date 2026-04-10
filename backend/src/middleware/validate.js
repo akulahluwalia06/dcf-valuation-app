@@ -1,7 +1,7 @@
-// Sanitize ticker input — only allow alphanumeric + dot/dash, max 10 chars
+// Sanitize ticker input — alphanumeric + dot/dash, max 15 chars (e.g. SHOP.TO, BRK.B)
 function validateTicker(req, res, next) {
   const ticker = (req.params.ticker || req.query.ticker || '').toUpperCase().trim();
-  if (!ticker || !/^[A-Z0-9.\-]{1,10}$/.test(ticker)) {
+  if (!ticker || !/^[A-Z0-9.\-]{1,15}$/.test(ticker)) {
     return res.status(400).json({ error: 'Invalid ticker symbol' });
   }
   req.ticker = ticker;

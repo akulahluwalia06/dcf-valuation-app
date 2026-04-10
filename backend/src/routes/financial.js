@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { validateTicker } = require('../middleware/validate');
-const { getFinancialSnapshot, getQuote } = require('../services/polygonService');
+const { getFinancialSnapshot, getQuote } = require('../services/financialService');
 
 router.get('/:ticker/snapshot', validateTicker, async (req, res) => {
   try {

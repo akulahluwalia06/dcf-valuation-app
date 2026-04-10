@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { validateTicker } = require('../middleware/validate');
-const { getFinancialSnapshot, getQuote } = require('../services/fmpService');
+const { getFinancialSnapshot, getQuote } = require('../services/yahooService');
 
-// GET /api/financial/:ticker/snapshot
-// Returns normalized financial data for DCF pre-population
 router.get('/:ticker/snapshot', validateTicker, async (req, res) => {
   try {
     const snapshot = await getFinancialSnapshot(req.ticker);
+
+    if (!snapshot.currentPrice && !snapshot.snapshot.revenue) {
+      return res.status(404).json({ error: `No financial data found for ${req.ticker}. Check the ticker symbol.` });
+    }
     res.json(snapshot);
   } catch (err) {
     console.error(`Snapshot error for ${req.ticker}:`, err.message);
@@ -15,8 +17,6 @@ router.get('/:ticker/snapshot', validateTicker, async (req, res) => {
   }
 });
 
-// GET /api/financial/:ticker/quote
-// Returns live price quote (not cached)
 router.get('/:ticker/quote', validateTicker, async (req, res) => {
   try {
     const quote = await getQuote(req.ticker);

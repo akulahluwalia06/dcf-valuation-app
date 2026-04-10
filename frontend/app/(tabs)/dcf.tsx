@@ -1,39 +1,81 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform, Alert,
+  ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useDCFStore } from '../../store/useDCFStore';
 import { financialApi } from '../../services/api';
-import { fmt$, fmtPct, fmtM, calculateSensitivityGrid, getSensitivityBg, getSensitivityColor } from '../../utils/dcfEngine';
+import { calculateDCF, calculateSensitivityGrid, fmt$, fmtPct, fmtM, getSensitivityBg, getSensitivityColor } from '../../utils/dcfEngine';
 import { DCFAssumptions, FinancialSnapshot } from '../../types/dcf';
+import Slider from '../../components/ui/Slider';
+import BarChart from '../../components/charts/BarChart';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 const FISCAL_YEARS = ['Yr 1', 'Yr 2', 'Yr 3', 'Yr 4', 'Yr 5', 'Yr 6', 'Yr 7'];
-
-const DEFAULT_ASSUMPTIONS: Omit<DCFAssumptions, 'baseRevenue' | 'cash' | 'debt' | 'sharesOutstanding'> = {
-  revGrowthRates: [0.15, 0.13, 0.11, 0.10, 0.09, 0.08, 0.07],
-  ebitMargin: 0.20,
-  taxRate: 0.21,
-  grossMargin: 0.65,
-  daPercent: 0.04,
-  capexPercent: 0.03,
-  nwcPercent: -0.05,
-  wacc: 0.10,
-  terminalGrowthRate: 0.03,
-  exitMultiple: 20,
-};
+const WACC_OFFSETS = [-0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02];
+const TGR_VALUES   = [0.01, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05];
+const isWide = Platform.OS === 'web';
 
 export default function DCFToolScreen() {
-  const { ticker, snapshot, assumptions, result, snapshotLoading, snapshotError,
-    setTicker, setSnapshot, setAssumptions, updateAssumption, updateGrowthRate,
-    setSnapshotLoading, setSnapshotError, reset } = useDCFStore();
+  const { ticker, snapshot, snapshotLoading, snapshotError,
+    setTicker, setSnapshot, setSnapshotLoading, setSnapshotError, reset } = useDCFStore();
 
   const [inputTicker, setInputTicker] = useState('');
   const [activeTab, setActiveTab] = useState<'inputs' | 'results' | 'sensitivity'>('inputs');
 
+  // Live slider assumptions
+  const [phase1Growth, setPhase1Growth] = useState(0.12);
+  const [phase2Growth, setPhase2Growth] = useState(0.08);
+  const [tgr, setTgr]       = useState(0.03);
+  const [wacc, setWacc]     = useState(0.10);
+  const [ebitM, setEbitM]   = useState(0.20);
+  const [exitMult, setExitMult] = useState(20);
+  const [cash, setCash]     = useState(0);
+  const [debt, setDebt]     = useState(0);
+  const [shares, setShares] = useState(1);
+  const [baseRev, setBaseRev] = useState(0);
+
+  // Sync sliders when snapshot loads
+  useEffect(() => {
+    if (!snapshot) return;
+    const s = snapshot.snapshot;
+    setBaseRev(s.revenue / 1e6);
+    setEbitM(Math.max(s.ebitMargin, 0.05));
+    setCash(s.cash / 1e6);
+    setDebt(s.totalDebt / 1e6);
+    setShares(s.sharesOutstanding / 1e6);
+  }, [snapshot]);
+
+  const assumptions: DCFAssumptions = useMemo(() => ({
+    baseRevenue: baseRev,
+    revGrowthRates: [phase1Growth, phase1Growth, phase1Growth, phase2Growth, phase2Growth, phase2Growth, phase2Growth],
+    ebitMargin: ebitM,
+    taxRate: 0.21,
+    grossMargin: snapshot?.snapshot.grossMargin || 0.60,
+    daPercent: snapshot?.snapshot.daPercent || 0.04,
+    capexPercent: snapshot?.snapshot.capexPercent || 0.03,
+    nwcPercent: -0.05,
+    wacc,
+    terminalGrowthRate: tgr,
+    exitMultiple: exitMult,
+    cash,
+    debt,
+    sharesOutstanding: shares,
+  }), [phase1Growth, phase2Growth, tgr, wacc, ebitM, exitMult, cash, debt, shares, baseRev, snapshot]);
+
+  const result = useMemo(() => {
+    if (!baseRev || !shares) return null;
+    return calculateDCF(assumptions);
+  }, [assumptions, baseRev, shares]);
+
+  const sensGrid = useMemo(() => {
+    if (!result) return [];
+    return calculateSensitivityGrid(assumptions, WACC_OFFSETS, TGR_VALUES, snapshot?.currentPrice || 0);
+  }, [assumptions, result, snapshot]);
+
   async function handleSearch() {
-    if (!inputTicker.trim()) return;
     const t = inputTicker.trim().toUpperCase();
+    if (!t) return;
     reset();
     setTicker(t);
     setSnapshotLoading(true);
@@ -41,24 +83,6 @@ export default function DCFToolScreen() {
     try {
       const snap: FinancialSnapshot = await financialApi.getSnapshot(t);
       setSnapshot(snap);
-      // Pre-populate assumptions from live data
-      const auto: DCFAssumptions = {
-        baseRevenue: snap.snapshot.revenue / 1e6, // convert to $M if needed
-        revGrowthRates: DEFAULT_ASSUMPTIONS.revGrowthRates,
-        ebitMargin: Math.max(snap.snapshot.ebitMargin, 0.05),
-        taxRate: DEFAULT_ASSUMPTIONS.taxRate,
-        grossMargin: snap.snapshot.grossMargin || DEFAULT_ASSUMPTIONS.grossMargin,
-        daPercent: snap.snapshot.daPercent || DEFAULT_ASSUMPTIONS.daPercent,
-        capexPercent: snap.snapshot.capexPercent || DEFAULT_ASSUMPTIONS.capexPercent,
-        nwcPercent: DEFAULT_ASSUMPTIONS.nwcPercent,
-        wacc: DEFAULT_ASSUMPTIONS.wacc,
-        terminalGrowthRate: DEFAULT_ASSUMPTIONS.terminalGrowthRate,
-        exitMultiple: DEFAULT_ASSUMPTIONS.exitMultiple,
-        cash: snap.snapshot.cash / 1e6,
-        debt: snap.snapshot.totalDebt / 1e6,
-        sharesOutstanding: snap.snapshot.sharesOutstanding / 1e6,
-      };
-      setAssumptions(auto);
       setActiveTab('inputs');
     } catch (e: any) {
       setSnapshotError(e.message);
@@ -67,28 +91,34 @@ export default function DCFToolScreen() {
     }
   }
 
-  const WACC_OFFSETS = [-0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02];
-  const TGR_VALUES   = [0.01, 0.02, 0.025, 0.03, 0.035, 0.04, 0.05];
-  const sensGrid = assumptions && result
-    ? calculateSensitivityGrid(assumptions, WACC_OFFSETS, TGR_VALUES, snapshot?.currentPrice || 0)
-    : [];
+  const currentPrice = snapshot?.currentPrice || 0;
+  const upside = result && currentPrice ? (result.intrinsicPerShare.blended - currentPrice) / currentPrice : null;
+  const isUp = upside !== null && upside >= 0;
+
+  const fcfBars = result?.projections.map((p, i) => ({
+    label: `Y${i + 1}`,
+    value: p.fcff,
+    color: i < 3 ? '#00C851' : '#00FF80',
+  })) || [];
 
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <AnimatedBackground />
+
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.headerTitle}>DCF Tool</Text>
-        <Text style={s.headerSub}>Auto-populate from live financial data · CFA FCFF methodology</Text>
+        <Text style={s.headerTitle}>DCF<Text style={{ color: '#00FF80' }}>.</Text>TOOL</Text>
+        <Text style={s.headerSub}>SEARCH ANY TICKER  ·  AUTO-POPULATE FROM LIVE FINANCIALS  ·  INSTANT RECALCULATION</Text>
       </View>
 
-      {/* Ticker search */}
+      {/* Search bar */}
       <View style={s.searchRow}>
         <TextInput
           style={s.searchInput}
           value={inputTicker}
           onChangeText={(t: string) => setInputTicker(t.toUpperCase())}
-          placeholder="Enter ticker (e.g. AAPL, MSFT, NVDA)"
-          placeholderTextColor="#475569"
+          placeholder="AAPL  MSFT  NVDA  GOOGL  TSLA  META..."
+          placeholderTextColor="#1a3a2a"
           autoCapitalize="characters"
           autoCorrect={false}
           onSubmitEditing={handleSearch}
@@ -96,33 +126,49 @@ export default function DCFToolScreen() {
         />
         <TouchableOpacity style={s.searchBtn} onPress={handleSearch} disabled={snapshotLoading}>
           {snapshotLoading
-            ? <ActivityIndicator size="small" color="#FFF" />
-            : <Text style={s.searchBtnText}>Load</Text>
+            ? <ActivityIndicator size="small" color="#000" />
+            : <Text style={s.searchBtnText}>LOAD</Text>
           }
         </TouchableOpacity>
       </View>
 
-      {snapshotError && (
-        <View style={s.errorBox}>
-          <Text style={s.errorText}>{snapshotError}</Text>
+      {/* Quick picks */}
+      {!snapshot && !snapshotLoading && (
+        <View style={s.quickRow}>
+          {['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META', 'TSLA', 'AMZN'].map(t => (
+            <TouchableOpacity key={t} style={s.quickChip} onPress={() => { setInputTicker(t); }}>
+              <Text style={s.quickText}>{t}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
-      {/* Company info strip */}
+      {snapshotError && (
+        <View style={s.errorBox}>
+          <Text style={s.errorText}>⚠  {snapshotError}</Text>
+        </View>
+      )}
+
+      {/* Company strip */}
       {snapshot && (
         <View style={s.companyStrip}>
+          <View style={s.companyTickerBox}>
+            <Text style={s.companyTicker}>{snapshot.ticker}</Text>
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={s.companyName}>{snapshot.companyName}</Text>
             <Text style={s.companySub}>{snapshot.exchange}  ·  {snapshot.sector}</Text>
           </View>
-          <View style={s.priceBox}>
-            <Text style={s.priceLabel}>Price</Text>
-            <Text style={s.priceVal}>{fmt$(snapshot.currentPrice, 2)}</Text>
-          </View>
-          {result && (
-            <View style={[s.priceBox, { marginLeft: 16 }]}>
-              <Text style={s.priceLabel}>Intrinsic</Text>
-              <Text style={[s.priceVal, { color: result.intrinsicPerShare.blended >= snapshot.currentPrice ? '#10B981' : '#C0392B' }]}>
+          {currentPrice > 0 && (
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.priceLabel}>CURRENT</Text>
+              <Text style={s.priceVal}>{fmt$(currentPrice, 2)}</Text>
+            </View>
+          )}
+          {result && upside !== null && (
+            <View style={{ alignItems: 'flex-end', marginLeft: 16 }}>
+              <Text style={s.priceLabel}>INTRINSIC</Text>
+              <Text style={[s.priceVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
                 {fmt$(result.intrinsicPerShare.blended, 2)}
               </Text>
             </View>
@@ -130,258 +176,307 @@ export default function DCFToolScreen() {
         </View>
       )}
 
-      {!snapshot && !snapshotLoading && (
-        <View style={s.emptyState}>
-          <Text style={s.emptyTitle}>Search any ticker to begin</Text>
-          <Text style={s.emptySub}>Live financial data auto-fills assumptions. Adjust any input and the DCF recalculates instantly.</Text>
-          {['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META'].map(t => (
-            <TouchableOpacity key={t} style={s.suggestionChip} onPress={() => { setInputTicker(t); }}>
-              <Text style={s.suggestionText}>{t}</Text>
+      {/* Sub-tabs */}
+      {snapshot && result && (
+        <View style={s.subTabBar}>
+          {(['inputs', 'results', 'sensitivity'] as const).map(tab => (
+            <TouchableOpacity key={tab} style={[s.subTab, activeTab === tab && s.subTabActive]} onPress={() => setActiveTab(tab)}>
+              <Text style={[s.subTabText, activeTab === tab && s.subTabTextActive]}>
+                {tab.toUpperCase()}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
       )}
 
-      {assumptions && result && (
-        <>
-          {/* Sub-tabs */}
-          <View style={s.subTabBar}>
-            {(['inputs', 'results', 'sensitivity'] as const).map(tab => (
-              <TouchableOpacity key={tab} style={[s.subTab, activeTab === tab && s.subTabActive]} onPress={() => setActiveTab(tab)}>
-                <Text style={[s.subTabText, activeTab === tab && s.subTabTextActive]}>
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+      {/* Empty state */}
+      {!snapshot && !snapshotLoading && (
+        <View style={s.emptyState}>
+          <Text style={s.emptyTitle}>ENTER A TICKER TO BEGIN</Text>
+          <Text style={s.emptySub}>Live financial data auto-fills all assumptions.{'\n'}Adjust sliders — DCF recalculates instantly.</Text>
+        </View>
+      )}
 
-          <ScrollView style={s.tabContent} contentContainerStyle={{ padding: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
-            {activeTab === 'inputs' && <InputsTab assumptions={assumptions} updateAssumption={updateAssumption} updateGrowthRate={updateGrowthRate} snapshot={snapshot} />}
-            {activeTab === 'results' && <ResultsTab result={result} assumptions={assumptions} currentPrice={snapshot?.currentPrice} />}
-            {activeTab === 'sensitivity' && <SensTab grid={sensGrid} tgrValues={TGR_VALUES} currentPrice={snapshot?.currentPrice || 0} />}
-          </ScrollView>
-        </>
+      {snapshotLoading && (
+        <View style={s.emptyState}>
+          <ActivityIndicator size="large" color="#00FF80" />
+          <Text style={[s.emptySub, { marginTop: 16 }]}>LOADING FINANCIAL DATA...</Text>
+        </View>
+      )}
+
+      {/* Main content */}
+      {snapshot && result && (
+        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled">
+          {activeTab === 'inputs' && (
+            <View style={isWide ? s.twoCol : {}}>
+              {/* LEFT — sliders */}
+              <View style={isWide ? s.leftPanel : {}}>
+                <Panel title="BASE METRICS">
+                  <Slider label={`BASE REVENUE ($M)  —  FY${snapshot.latestFiscalYear}`}
+                    value={baseRev} min={Math.max(baseRev * 0.3, 1)} max={baseRev * 3} step={baseRev * 0.01}
+                    onChange={setBaseRev} formatValue={v => `$${v.toFixed(0)}M`} />
+                  <Slider label="CASH & EQUIVALENTS ($M)"
+                    value={cash} min={0} max={Math.max(cash * 3, 1000)} step={10}
+                    onChange={setCash} formatValue={v => `$${v.toFixed(0)}M`} />
+                  <Slider label="TOTAL DEBT ($M)"
+                    value={debt} min={0} max={Math.max(debt * 3, 1000)} step={10}
+                    onChange={setDebt} formatValue={v => `$${v.toFixed(0)}M`} />
+                  <Slider label="DILUTED SHARES (M)"
+                    value={shares} min={Math.max(shares * 0.5, 1)} max={shares * 2} step={shares * 0.01}
+                    onChange={setShares} formatValue={v => `${v.toFixed(0)}M`} />
+                </Panel>
+
+                <Panel title="GROWTH ASSUMPTIONS">
+                  <Slider label="PHASE 1 GROWTH (YR 1–3)"
+                    value={phase1Growth} min={0.02} max={0.50} step={0.005}
+                    onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  <Slider label="PHASE 2 GROWTH (YR 4–7)"
+                    value={phase2Growth} min={0.01} max={0.30} step={0.005}
+                    onChange={setPhase2Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  <Slider label="TERMINAL GROWTH RATE"
+                    value={tgr} min={0.01} max={0.06} step={0.005}
+                    onChange={setTgr} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                </Panel>
+
+                <Panel title="DISCOUNT RATE & MARGINS">
+                  <Slider label="WACC"
+                    value={wacc} min={0.06} max={0.20} step={0.005}
+                    onChange={setWacc} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  <Slider label="EBIT MARGIN"
+                    value={ebitM} min={0.02} max={0.60} step={0.01}
+                    onChange={setEbitM} formatValue={v => `${(v * 100).toFixed(0)}%`} />
+                  <Slider label="EXIT EV/EBITDA MULTIPLE"
+                    value={exitMult} min={5} max={60} step={1}
+                    onChange={setExitMult} formatValue={v => `${v}x`} />
+                </Panel>
+              </View>
+
+              {/* RIGHT — live output */}
+              <View style={isWide ? s.rightPanel : { marginTop: 16 }}>
+                {/* Intrinsic card */}
+                <View style={[s.intrinsicCard, { borderColor: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                  <Text style={s.intrinsicLabel}>INTRINSIC VALUE PER SHARE</Text>
+                  <Text style={[s.intrinsicVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                    {fmt$(result.intrinsicPerShare.blended, 2)}
+                  </Text>
+                  <View style={s.methodRow}>
+                    <View style={s.methodItem}>
+                      <Text style={s.methodLabel}>GGM</Text>
+                      <Text style={s.methodVal}>{fmt$(result.intrinsicPerShare.ggm, 2)}</Text>
+                    </View>
+                    <View style={s.methodItem}>
+                      <Text style={s.methodLabel}>EXIT MULT.</Text>
+                      <Text style={s.methodVal}>{fmt$(result.intrinsicPerShare.exit, 2)}</Text>
+                    </View>
+                    <View style={s.methodItem}>
+                      <Text style={s.methodLabel}>BLENDED</Text>
+                      <Text style={[s.methodVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                        {fmt$(result.intrinsicPerShare.blended, 2)}
+                      </Text>
+                    </View>
+                  </View>
+                  {currentPrice > 0 && upside !== null && (
+                    <View style={[s.upsideBadge, { borderColor: isUp ? '#00FF80' : '#FF3B3B', backgroundColor: isUp ? '#00FF8011' : '#FF3B3B11' }]}>
+                      <Text style={[s.upsideText, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                        {isUp ? '▲' : '▼'} {fmtPct(Math.abs(upside))} vs {fmt$(currentPrice, 2)}  ·  {isUp ? 'UPSIDE' : 'DOWNSIDE'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* KPI grid */}
+                <View style={s.kpiGrid}>
+                  <KPI label="PV OF FCFS (7YR)"    val={fmtM(result.pvFCFFs)} />
+                  <KPI label="PV TERMINAL VALUE"    val={fmtM(result.terminalValues.pvBlended)} />
+                  <KPI label="ENTERPRISE VALUE"     val={fmtM(result.enterpriseValue.blended)} />
+                  <KPI label="EQUITY VALUE"         val={fmtM(result.equityValue.blended)} accent />
+                </View>
+
+                {/* TV bar */}
+                <Panel title="TERMINAL VALUE AS % OF EV">
+                  <View style={s.tvBar}>
+                    <View style={[s.tvFill, { flex: Math.max(1 - result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#00C851' }]} />
+                    <View style={[s.tvFill, { flex: Math.max(result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#00FF80' }]} />
+                  </View>
+                  <View style={s.tvLabels}>
+                    <Text style={s.tvLabel}>FCFs ({fmtPct(1 - result.tvAsPercentEV.ggm, 0)})</Text>
+                    <Text style={s.tvLabel}>Terminal ({fmtPct(result.tvAsPercentEV.ggm, 0)})</Text>
+                  </View>
+                </Panel>
+
+                {/* FCF chart */}
+                <Panel title="PROJECTED FREE CASH FLOWS">
+                  <BarChart bars={fcfBars} height={100} />
+                </Panel>
+
+                {/* Year table */}
+                <Panel title="YEAR-BY-YEAR SUMMARY">
+                  <View style={s.tableHeader}>
+                    {['Year', 'Revenue', 'FCF ($M)', 'PV ($M)'].map(h => (
+                      <Text key={h} style={s.th}>{h}</Text>
+                    ))}
+                  </View>
+                  {result.projections.map((p, i) => (
+                    <View key={i} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
+                      <Text style={s.td}>Yr {i + 1}</Text>
+                      <Text style={s.td}>{fmtM(p.revenue)}</Text>
+                      <Text style={[s.td, { color: '#00FF80' }]}>{fmtM(p.fcff)}</Text>
+                      <Text style={s.td}>{fmtM(p.pvFcff)}</Text>
+                    </View>
+                  ))}
+                </Panel>
+              </View>
+            </View>
+          )}
+
+          {activeTab === 'results' && (
+            <Panel title="FULL RESULTS">
+              {[
+                { label: 'Intrinsic — GGM', val: fmt$(result.intrinsicPerShare.ggm, 2) },
+                { label: 'Intrinsic — Exit Multiple', val: fmt$(result.intrinsicPerShare.exit, 2) },
+                { label: 'Intrinsic — Blended', val: fmt$(result.intrinsicPerShare.blended, 2), accent: true },
+                ...(currentPrice ? [{ label: 'Implied Upside / (Downside)', val: fmtPct(upside!), accent: false }] : []),
+                { label: 'PV of FCFFs', val: fmtM(result.pvFCFFs) },
+                { label: 'PV Terminal Value (GGM)', val: fmtM(result.terminalValues.pvGGM) },
+                { label: 'PV Terminal Value (Exit)', val: fmtM(result.terminalValues.pvExit) },
+                { label: 'Enterprise Value (Blended)', val: fmtM(result.enterpriseValue.blended), bold: true },
+                { label: '+ Cash', val: fmtM(cash) },
+                { label: '− Debt', val: fmtM(debt) },
+                { label: 'Equity Value (Blended)', val: fmtM(result.equityValue.blended), bold: true },
+                { label: 'TV as % of EV (GGM)', val: fmtPct(result.tvAsPercentEV.ggm) },
+                { label: 'TV as % of EV (Exit)', val: fmtPct(result.tvAsPercentEV.exit) },
+              ].map((row: any, i) => (
+                <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
+                  <Text style={[s.simpleLabel, row.bold && { color: '#CCC' }, row.accent && { color: '#00FF80' }]}>{row.label}</Text>
+                  <Text style={[s.simpleVal, row.bold && { fontWeight: '700' }, row.accent && { color: '#00FF80', fontSize: 20 }]}>{row.val}</Text>
+                </View>
+              ))}
+            </Panel>
+          )}
+
+          {activeTab === 'sensitivity' && (
+            <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE">
+              <Text style={{ color: '#334155', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
+                Green = upside  ·  Yellow = neutral  ·  Red = downside  {currentPrice ? `vs ${fmt$(currentPrice, 2)}` : ''}
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View>
+                  <View style={[tr.row, { backgroundColor: '#001a00' }]}>
+                    <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
+                    {TGR_VALUES.map(t => <Text key={t} style={[tr.sensCell, { color: '#00FF80' }]}>{fmtPct(t)}</Text>)}
+                  </View>
+                  {sensGrid.map((row: any, wi: number) => (
+                    <View key={wi} style={tr.row}>
+                      <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80, backgroundColor: '#001a00' }]}>{fmtPct(row.wacc)}</Text>
+                      {row.values.map((cell: any, ti: number) => (
+                        <View key={ti} style={[tr.sensCell, { backgroundColor: getSensitivityBg(cell.delta), justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 11, fontWeight: '700' }}>{fmt$(cell.price, 0)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </Panel>
+          )}
+        </ScrollView>
       )}
     </KeyboardAvoidingView>
   );
 }
 
-function InputsTab({ assumptions, updateAssumption, updateGrowthRate, snapshot }: any) {
-  function NumInput({ label, value, field, isPercent, note }: { label: string; value: number; field: keyof DCFAssumptions; isPercent?: boolean; note?: string }) {
-    const [local, setLocal] = useState(isPercent ? (value * 100).toFixed(2) : value.toString());
-    return (
-      <View style={si.row}>
-        <View style={{ flex: 1 }}>
-          <Text style={si.label}>{label}</Text>
-          {note && <Text style={si.note}>{note}</Text>}
-        </View>
-        <TextInput
-          style={si.input}
-          value={local}
-          onChangeText={setLocal}
-          onBlur={() => {
-            const parsed = parseFloat(local);
-            if (!isNaN(parsed)) updateAssumption(field, isPercent ? parsed / 100 : parsed);
-          }}
-          keyboardType="decimal-pad"
-          returnKeyType="done"
-        />
-        {isPercent && <Text style={si.unit}>%</Text>}
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={p.panel}>
+      <View style={p.titleRow}>
+        <View style={p.dot} />
+        <Text style={p.title}>{title}</Text>
       </View>
-    );
-  }
-
-  return (
-    <View>
-      <SectionHeader title="REVENUE BUILD" />
-      <NumInput label="Base Revenue ($M)" value={assumptions.baseRevenue} field="baseRevenue" note="Most recent fiscal year" />
-      <Text style={si.subHeader}>Revenue Growth Rate — 7-Year Projection</Text>
-      {FISCAL_YEARS.map((yr, i) => {
-        const [local, setLocal] = useState((assumptions.revGrowthRates[i] * 100).toFixed(1));
-        return (
-          <View key={yr} style={si.row}>
-            <Text style={[si.label, { flex: 1 }]}>{yr} Growth</Text>
-            <TextInput
-              style={si.input}
-              value={local}
-              onChangeText={setLocal}
-              onBlur={() => { const p = parseFloat(local); if (!isNaN(p)) updateGrowthRate(i, p / 100); }}
-              keyboardType="decimal-pad"
-            />
-            <Text style={si.unit}>%</Text>
-          </View>
-        );
-      })}
-
-      <SectionHeader title="INCOME STATEMENT" style={{ marginTop: 16 }} />
-      <NumInput label="EBIT Margin" value={assumptions.ebitMargin} field="ebitMargin" isPercent note="Non-GAAP adj. operating margin" />
-      <NumInput label="Tax Rate" value={assumptions.taxRate} field="taxRate" isPercent />
-      <NumInput label="Gross Margin" value={assumptions.grossMargin} field="grossMargin" isPercent />
-
-      <SectionHeader title="CASH FLOW ADJUSTMENTS" style={{ marginTop: 16 }} />
-      <NumInput label="D&A (% of Revenue)" value={assumptions.daPercent} field="daPercent" isPercent />
-      <NumInput label="CapEx (% of Revenue)" value={assumptions.capexPercent} field="capexPercent" isPercent />
-      <NumInput label="NWC (% of Revenue)" value={assumptions.nwcPercent} field="nwcPercent" isPercent note="Negative = deferred revenue advantage" />
-
-      <SectionHeader title="DISCOUNT RATE & TERMINAL" style={{ marginTop: 16 }} />
-      <NumInput label="WACC" value={assumptions.wacc} field="wacc" isPercent />
-      <NumInput label="Terminal Growth Rate" value={assumptions.terminalGrowthRate} field="terminalGrowthRate" isPercent />
-      <NumInput label="Exit EV/EBITDA Multiple" value={assumptions.exitMultiple} field="exitMultiple" />
-
-      <SectionHeader title="BRIDGE INPUTS" style={{ marginTop: 16 }} />
-      <NumInput label="Cash & Equivalents ($M)" value={assumptions.cash} field="cash" />
-      <NumInput label="Total Debt ($M)" value={assumptions.debt} field="debt" />
-      <NumInput label="Diluted Shares (M)" value={assumptions.sharesOutstanding} field="sharesOutstanding" />
+      {children}
     </View>
   );
 }
 
-function ResultsTab({ result, assumptions, currentPrice }: any) {
-  const upside = currentPrice ? (result.intrinsicPerShare.blended - currentPrice) / currentPrice : null;
+function KPI({ label, val, accent }: { label: string; val: string; accent?: boolean }) {
   return (
-    <View>
-      {/* Key outputs */}
-      <SectionHeader title="INTRINSIC VALUE" />
-      {[
-        { label: 'Gordon Growth Model', val: fmt$(result.intrinsicPerShare.ggm, 2) },
-        { label: 'EV/EBITDA Exit Multiple', val: fmt$(result.intrinsicPerShare.exit, 2) },
-        { label: 'Blended 50/50 (Base)', val: fmt$(result.intrinsicPerShare.blended, 2), highlight: true },
-        ...(currentPrice ? [{ label: 'Implied Upside / (Downside)', val: fmtPct(upside!), color: upside! >= 0 ? '#10B981' : '#C0392B' }] : []),
-      ].map((row: any, i) => (
-        <View key={i} style={[s.simpleRow, { backgroundColor: row.highlight ? '#0EA5E911' : i % 2 === 0 ? '#0F1923' : '#162232' }]}>
-          <Text style={[s.simpleLabel, row.highlight && { color: '#0EA5E9' }]}>{row.label}</Text>
-          <Text style={[s.simpleVal, row.color && { color: row.color }, row.highlight && { color: '#0EA5E9', fontWeight: '800', fontSize: 18 }]}>{row.val}</Text>
-        </View>
-      ))}
-
-      <SectionHeader title="ENTERPRISE VALUE BRIDGE" style={{ marginTop: 16 }} />
-      {[
-        { label: 'PV of FCFFs (7 years)', val: fmtM(result.pvFCFFs) },
-        { label: 'PV Terminal Value (GGM)', val: fmtM(result.terminalValues.pvGGM) },
-        { label: 'PV Terminal Value (Exit)', val: fmtM(result.terminalValues.pvExit) },
-        { label: 'Enterprise Value (Blended)', val: fmtM(result.enterpriseValue.blended), bold: true },
-        { label: '(+) Cash', val: fmtM(assumptions.cash) },
-        { label: '(−) Debt', val: fmtM(assumptions.debt) },
-        { label: 'Equity Value (Blended)', val: fmtM(result.equityValue.blended), bold: true },
-        { label: 'TV as % of EV (GGM)', val: fmtPct(result.tvAsPercentEV.ggm) },
-        { label: 'TV as % of EV (Exit)', val: fmtPct(result.tvAsPercentEV.exit) },
-      ].map((row: any, i) => (
-        <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#0F1923' : '#162232' }]}>
-          <Text style={[s.simpleLabel, row.bold && { color: '#E2E8F0', fontWeight: '600' }]}>{row.label}</Text>
-          <Text style={[s.simpleVal, row.bold && { fontWeight: '700' }]}>{row.val}</Text>
-        </View>
-      ))}
-
-      <SectionHeader title="YEAR-BY-YEAR PROJECTIONS" style={{ marginTop: 16 }} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
-          <View style={[tr.row, { backgroundColor: '#1E3A5F' }]}>
-            <Text style={[tr.cell, tr.label, { color: '#94A3B8' }]}>Metric</Text>
-            {FISCAL_YEARS.map(y => <Text key={y} style={[tr.cell, { color: '#FFF', fontWeight: '700', textAlign: 'center' }]}>{y}</Text>)}
-          </View>
-          {[
-            { label: 'Revenue ($M)', key: 'revenue', fmt: (v: number) => (v).toFixed(0) },
-            { label: 'EBIT ($M)', key: 'ebit', fmt: (v: number) => v.toFixed(0) },
-            { label: 'FCFF ($M)', key: 'fcff', fmt: (v: number) => v.toFixed(0), bold: true },
-            { label: 'FCF Margin', key: 'fcfMargin', fmt: fmtPct },
-            { label: 'PV FCFF ($M)', key: 'pvFcff', fmt: (v: number) => v.toFixed(0), bold: true },
-          ].map((row, ri) => (
-            <View key={row.label} style={[tr.row, { backgroundColor: ri % 2 === 0 ? '#0F1923' : '#162232' }]}>
-              <Text style={[tr.cell, tr.label, row.bold && { color: '#0EA5E9' }]}>{row.label}</Text>
-              {result.projections.map((p: any, i: number) => (
-                <Text key={i} style={[tr.cell, row.bold && { color: '#0EA5E9', fontWeight: '700' }]}>{row.fmt(p[row.key])}</Text>
-              ))}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+    <View style={[k.card, accent && { borderColor: '#00FF8044' }]}>
+      <Text style={k.label}>{label}</Text>
+      <Text style={[k.val, accent && { color: '#00FF80' }]}>{val}</Text>
     </View>
   );
 }
 
-function SensTab({ grid, tgrValues, currentPrice }: { grid: any[]; tgrValues: number[]; currentPrice: number }) {
-  if (!grid.length) return <Text style={{ color: '#64748B', padding: 16 }}>Load a ticker to see sensitivity analysis.</Text>;
-  return (
-    <View>
-      <SectionHeader title="WACC × TERMINAL GROWTH RATE  (Blended / Share)" />
-      <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 10 }}>
-        Green &gt; +20%  ·  Yellow ±10%  ·  Red &lt; −10%  {currentPrice ? `vs $${currentPrice.toFixed(0)}` : ''}
-      </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
-          <View style={[tr.row, { backgroundColor: '#1E3A5F' }]}>
-            <Text style={[tr.sensCell, { color: '#94A3B8', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
-            {tgrValues.map(t => <Text key={t} style={[tr.sensCell, { color: '#94A3B8', fontWeight: '600' }]}>{fmtPct(t)}</Text>)}
-          </View>
-          {grid.map((row, wi) => (
-            <View key={wi} style={tr.row}>
-              <Text style={[tr.sensCell, { color: '#0EA5E9', fontWeight: '700', width: 80, backgroundColor: '#162232' }]}>{fmtPct(row.wacc)}</Text>
-              {row.values.map((cell: any, ti: number) => (
-                <View key={ti} style={[tr.sensCell, { backgroundColor: getSensitivityBg(cell.delta), justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 11, fontWeight: '600' }}>{fmt$(cell.price, 0)}</Text>
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000000' },
+  header: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
+  headerTitle: { color: '#FFFFFF', fontSize: 26, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
+  headerSub: { color: '#1a3a2a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
+  searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#000', zIndex: 1, borderBottomWidth: 1, borderBottomColor: '#00FF8011' },
+  searchInput: { flex: 1, backgroundColor: '#050505', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, color: '#00FF80', fontSize: 15, borderWidth: 1, borderColor: '#00FF8033', fontFamily: 'monospace', letterSpacing: 2 },
+  searchBtn: { backgroundColor: '#00FF80', borderRadius: 8, paddingHorizontal: 20, justifyContent: 'center' },
+  searchBtnText: { color: '#000', fontWeight: '800', fontSize: 13, letterSpacing: 1.5, fontFamily: 'monospace' },
+  quickRow: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 8, zIndex: 1 },
+  quickChip: { backgroundColor: '#050505', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#00FF8022' },
+  quickText: { color: '#00FF80', fontWeight: '700', fontSize: 12, fontFamily: 'monospace' },
+  errorBox: { backgroundColor: '#1a0000', margin: 12, borderRadius: 8, padding: 14, borderWidth: 1, borderColor: '#FF3B3B44', zIndex: 1 },
+  errorText: { color: '#FF3B3B', fontSize: 13, fontFamily: 'monospace' },
+  companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#050505', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, gap: 12 },
+  companyTickerBox: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#00FF8033' },
+  companyTicker: { color: '#00FF80', fontWeight: '800', fontSize: 14, fontFamily: 'monospace' },
+  companyName: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
+  companySub: { color: '#334155', fontSize: 11, marginTop: 2 },
+  priceLabel: { color: '#334155', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
+  priceVal: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
+  subTabBar: { flexDirection: 'row', backgroundColor: '#000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
+  subTab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
+  subTabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
+  subTabText: { color: '#1a3a2a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  subTabTextActive: { color: '#00FF80' },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, zIndex: 1 },
+  emptyTitle: { color: '#00FF80', fontSize: 16, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 12 },
+  emptySub: { color: '#1a3a2a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
+  scroll: { flex: 1, zIndex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
+  twoCol: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
+  leftPanel: { flex: 1, gap: 16, maxWidth: 420 },
+  rightPanel: { flex: 1.4, gap: 16 },
+  intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
+  intrinsicLabel: { color: '#334155', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicVal: { fontSize: 48, fontWeight: '800', fontFamily: 'monospace', lineHeight: 56 },
+  methodRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#0a0a0a' },
+  methodItem: { alignItems: 'center' },
+  methodLabel: { color: '#334155', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
+  methodVal: { color: '#94A3B8', fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
+  upsideBadge: { marginTop: 14, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
+  upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
+  kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tvBar: { height: 14, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
+  tvFill: { height: '100%' },
+  tvLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  tvLabel: { color: '#334155', fontSize: 10, fontFamily: 'monospace' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
+  th: { flex: 1, color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
+  tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
+  td: { flex: 1, color: '#475569', fontSize: 12, fontFamily: 'monospace' },
+  simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+  simpleLabel: { color: '#475569', fontSize: 13, flex: 1 },
+  simpleVal: { color: '#94A3B8', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
+});
 
-function SectionHeader({ title, style }: { title: string; style?: any }) {
-  return (
-    <View style={[{ backgroundColor: '#1E3A5F', padding: 10, borderRadius: 8, marginBottom: 8 }, style]}>
-      <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', letterSpacing: 1 }}>{title}</Text>
-    </View>
-  );
-}
+const p = StyleSheet.create({
+  panel: { backgroundColor: '#050505', borderWidth: 1, borderColor: '#00FF8015', borderRadius: 12, padding: 16, marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#00FF80', marginRight: 8 },
+  title: { color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+});
 
-const si = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: '#1B2A3B' },
-  label: { color: '#94A3B8', fontSize: 13 },
-  note: { color: '#475569', fontSize: 10, marginTop: 2 },
-  subHeader: { color: '#64748B', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 12, marginBottom: 6 },
-  input: { backgroundColor: '#E8F0FE', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, width: 90, textAlign: 'right', color: '#1155CC', fontWeight: '700', fontSize: 13 },
-  unit: { color: '#64748B', fontSize: 12, marginLeft: 4, width: 16 },
+const k = StyleSheet.create({
+  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8022', borderRadius: 10, padding: 12 },
+  label: { color: '#334155', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
+  val: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
 });
 
 const tr = StyleSheet.create({
   row: { flexDirection: 'row' },
-  cell: { width: 90, paddingHorizontal: 8, paddingVertical: 8, color: '#E2E8F0', fontSize: 12, textAlign: 'right' },
-  label: { width: 160, textAlign: 'left', color: '#94A3B8', fontWeight: '500' },
-  sensCell: { width: 72, height: 40, paddingHorizontal: 4, paddingVertical: 6, fontSize: 12, textAlign: 'center' },
-});
-
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0D1B2A' },
-  header: { paddingHorizontal: 16, paddingTop: 52, paddingBottom: 12, backgroundColor: '#0F1923', borderBottomWidth: 1, borderBottomColor: '#1B2A3B' },
-  headerTitle: { color: '#FFFFFF', fontSize: 22, fontWeight: '800' },
-  headerSub: { color: '#64748B', fontSize: 11, marginTop: 3 },
-  searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#0F1923' },
-  searchInput: { flex: 1, backgroundColor: '#162232', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: '#FFFFFF', fontSize: 15, borderWidth: 1, borderColor: '#1B2A3B' },
-  searchBtn: { backgroundColor: '#0EA5E9', borderRadius: 12, paddingHorizontal: 20, justifyContent: 'center' },
-  searchBtnText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
-  errorBox: { backgroundColor: '#C0392B22', margin: 12, borderRadius: 10, padding: 12 },
-  errorText: { color: '#C0392B', fontSize: 13 },
-  companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#162232', borderBottomWidth: 1, borderBottomColor: '#1B2A3B' },
-  companyName: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-  companySub: { color: '#64748B', fontSize: 11, marginTop: 2 },
-  priceBox: { alignItems: 'flex-end' },
-  priceLabel: { color: '#64748B', fontSize: 10 },
-  priceVal: { color: '#0EA5E9', fontSize: 18, fontWeight: '800' },
-  emptyState: { flex: 1, alignItems: 'center', padding: 32, paddingTop: 48 },
-  emptyTitle: { color: '#E2E8F0', fontSize: 18, fontWeight: '700', marginBottom: 10 },
-  emptySub: { color: '#64748B', fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-  suggestionChip: { backgroundColor: '#162232', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginBottom: 8, borderWidth: 1, borderColor: '#1B2A3B' },
-  suggestionText: { color: '#0EA5E9', fontWeight: '700' },
-  subTabBar: { flexDirection: 'row', backgroundColor: '#0F1923', borderBottomWidth: 1, borderBottomColor: '#1B2A3B' },
-  subTab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  subTabActive: { borderBottomWidth: 2, borderBottomColor: '#0EA5E9' },
-  subTabText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
-  subTabTextActive: { color: '#0EA5E9' },
-  tabContent: { flex: 1 },
-  simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 11 },
-  simpleLabel: { color: '#94A3B8', fontSize: 13, flex: 1 },
-  simpleVal: { color: '#E2E8F0', fontSize: 13, fontWeight: '600' },
+  sensCell: { width: 72, height: 40, paddingHorizontal: 4, fontSize: 12, textAlign: 'center' },
 });

@@ -381,7 +381,7 @@ export default function DCFToolScreen() {
 
           {activeTab === 'sensitivity' && (
             <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE">
-              <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
+              <Text style={{ color: '#CBD5E1', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
                 Green = upside  ·  Yellow = neutral  ·  Red = downside  {currentPrice ? `vs ${fmt$(currentPrice, 2)}` : ''}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -435,7 +435,7 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },
   header: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
   headerTitle: { color: '#FFFFFF', fontSize: 26, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  headerSub: { color: '#4a7a5a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
+  headerSub: { color: '#6aaa8a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
   searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#000', zIndex: 1, borderBottomWidth: 1, borderBottomColor: '#00FF8011' },
   searchInput: { flex: 1, backgroundColor: '#050505', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, color: '#00FF80', fontSize: 15, borderWidth: 1, borderColor: '#00FF8033', fontFamily: 'monospace', letterSpacing: 2 },
   searchBtn: { backgroundColor: '#00FF80', borderRadius: 8, paddingHorizontal: 20, justifyContent: 'center' },
@@ -449,28 +449,28 @@ const s = StyleSheet.create({
   companyTickerBox: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#00FF8033' },
   companyTicker: { color: '#00FF80', fontWeight: '800', fontSize: 14, fontFamily: 'monospace' },
   companyName: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
-  companySub: { color: '#64748B', fontSize: 11, marginTop: 2 },
-  priceLabel: { color: '#64748B', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
+  companySub: { color: '#CBD5E1', fontSize: 11, marginTop: 2 },
+  priceLabel: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
   priceVal: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
   subTabBar: { flexDirection: 'row', backgroundColor: '#000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
   subTab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   subTabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
-  subTabText: { color: '#4a7a5a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  subTabText: { color: '#6aaa8a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
   subTabTextActive: { color: '#00FF80' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, zIndex: 1 },
   emptyTitle: { color: '#00FF80', fontSize: 16, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 12 },
-  emptySub: { color: '#4a7a5a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
+  emptySub: { color: '#6aaa8a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
   scroll: { flex: 1, zIndex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
   twoCol: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
   leftPanel: { flex: 1, gap: 16, maxWidth: 420 },
   rightPanel: { flex: 1.4, gap: 16 },
   intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
-  intrinsicLabel: { color: '#64748B', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicLabel: { color: '#CBD5E1', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
   intrinsicVal: { fontSize: 48, fontWeight: '800', fontFamily: 'monospace', lineHeight: 56 },
   methodRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#0a0a0a' },
   methodItem: { alignItems: 'center' },
-  methodLabel: { color: '#64748B', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
+  methodLabel: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
   methodVal: { color: '#CBD5E1', fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
   upsideBadge: { marginTop: 14, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
   upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
@@ -478,13 +478,13 @@ const s = StyleSheet.create({
   tvBar: { height: 14, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
   tvFill: { height: '100%' },
   tvLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  tvLabel: { color: '#64748B', fontSize: 10, fontFamily: 'monospace' },
+  tvLabel: { color: '#CBD5E1', fontSize: 10, fontFamily: 'monospace' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
   th: { flex: 1, color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
   tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
-  td: { flex: 1, color: '#94A3B8', fontSize: 12, fontFamily: 'monospace' },
+  td: { flex: 1, color: '#CBD5E1', fontSize: 12, fontFamily: 'monospace' },
   simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  simpleLabel: { color: '#94A3B8', fontSize: 13, flex: 1 },
+  simpleLabel: { color: '#CBD5E1', fontSize: 13, flex: 1 },
   simpleVal: { color: '#CBD5E1', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
 });
 
@@ -497,7 +497,7 @@ const p = StyleSheet.create({
 
 const k = StyleSheet.create({
   card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8033', borderRadius: 10, padding: 12 },
-  label: { color: '#64748B', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
+  label: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
   val: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
 });
 

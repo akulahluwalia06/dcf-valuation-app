@@ -128,29 +128,38 @@ export default function PANWScreen() {
             <View style={isWide ? s.leftPanel : s.fullPanel}>
               <Panel title="BASE METRICS">
                 <Slider label="BASE REVENUE (FY2025, $M)" value={BASE.baseRevenue} min={7000} max={12000} step={100}
-                  onChange={() => {}} formatValue={v => `$${v.toLocaleString()}M`} />
+                  onChange={() => {}} formatValue={v => `$${v.toLocaleString()}M`}
+                  parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                 <Slider label="CASH & EQUIVALENTS ($M)" value={cash} min={0} max={8000} step={100}
-                  onChange={setCash} formatValue={v => `$${v.toLocaleString()}M`} />
+                  onChange={setCash} formatValue={v => `$${v.toLocaleString()}M`}
+                  parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                 <Slider label="DILUTED SHARES (M)" value={shares} min={600} max={900} step={1}
-                  onChange={setShares} formatValue={v => `${v}M`} />
+                  onChange={setShares} formatValue={v => `${v}M`}
+                  parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
               </Panel>
 
               <Panel title="GROWTH ASSUMPTIONS">
                 <Slider label="PHASE 1 GROWTH (YR 1–3)" value={phase1Growth} min={0.05} max={0.35} step={0.005}
-                  onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                  parseValue={s => parseFloat(s.replace('%','')) / 100} />
                 <Slider label="PHASE 2 GROWTH (YR 4–7)" value={phase2Growth} min={0.03} max={0.25} step={0.005}
-                  onChange={setPhase2Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  onChange={setPhase2Growth} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                  parseValue={s => parseFloat(s.replace('%','')) / 100} />
                 <Slider label="TERMINAL GROWTH RATE" value={tgr} min={0.015} max={0.06} step={0.005}
-                  onChange={setTgr} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  onChange={setTgr} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                  parseValue={s => parseFloat(s.replace('%','')) / 100} />
               </Panel>
 
               <Panel title="DISCOUNT RATE & MARGINS">
                 <Slider label="WACC" value={wacc} min={0.07} max={0.14} step={0.005}
-                  onChange={setWacc} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                  onChange={setWacc} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                  parseValue={s => parseFloat(s.replace('%','')) / 100} />
                 <Slider label="EBIT MARGIN (NON-GAAP)" value={ebitM} min={0.15} max={0.45} step={0.01}
-                  onChange={setEbitM} formatValue={v => `${(v * 100).toFixed(0)}%`} />
+                  onChange={setEbitM} formatValue={v => `${(v * 100).toFixed(0)}%`}
+                  parseValue={s => parseFloat(s.replace('%','')) / 100} />
                 <Slider label="EXIT EV/EBITDA MULTIPLE" value={exitMult} min={15} max={50} step={1}
-                  onChange={setExitMult} formatValue={v => `${v}x`} />
+                  onChange={setExitMult} formatValue={v => `${v}x`}
+                  parseValue={s => parseFloat(s.replace('x',''))} />
               </Panel>
             </View>
 
@@ -301,7 +310,7 @@ function WACCTab({ wacc, taxRate }: any) {
         <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
           <View>
             <Text style={[s.simpleLabel, r.bold && { color: r.accent ? '#00FF80' : '#CCCCCC' }]}>{r.label}</Text>
-            {r.note && <Text style={{ color: '#64748B', fontSize: 10 }}>{r.note}</Text>}
+            {r.note && <Text style={{ color: '#CBD5E1', fontSize: 10 }}>{r.note}</Text>}
           </View>
           <Text style={[s.simpleVal, r.bold && { color: r.accent ? '#00FF80' : '#FFFFFF', fontSize: r.accent ? 22 : 14, fontWeight: '700' }]}>{r.val}</Text>
         </View>
@@ -313,7 +322,7 @@ function WACCTab({ wacc, taxRate }: any) {
 function SensitivityTab({ grid, tgrValues }: any) {
   return (
     <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE  (Blended / Share)">
-      <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 12 }}>Green = upside vs $190  ·  Yellow = neutral  ·  Red = downside</Text>
+      <Text style={{ color: '#CBD5E1', fontSize: 11, marginBottom: 12 }}>Green = upside vs $190  ·  Yellow = neutral  ·  Red = downside</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
           <View style={[tr.row, { backgroundColor: '#001a00' }]}>
@@ -363,9 +372,9 @@ function ScenariosTab({ baseRevenue, cash, shares }: any) {
             <View key={s.name} style={[s2.card, { borderColor: s.color + '55', flex: isWide ? 1 : undefined }]}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
                 <View style={[s2.pill, { backgroundColor: s.color + '22' }]}><Text style={[s2.pillText, { color: s.color }]}>{s.name}</Text></View>
-                <Text style={{ color: '#64748B', fontSize: 12 }}>p = {fmtPct(s.prob, 0)}</Text>
+                <Text style={{ color: '#CBD5E1', fontSize: 12 }}>p = {fmtPct(s.prob, 0)}</Text>
               </View>
-              <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 12, lineHeight: 18 }}>{s.narrative}</Text>
+              <Text style={{ color: '#CBD5E1', fontSize: 12, marginBottom: 12, lineHeight: 18 }}>{s.narrative}</Text>
               <Text style={[s2.price, { color: s.color }]}>{fmt$(s.result.intrinsicPerShare.blended, 2)}</Text>
               <Text style={{ color: upside >= 0 ? '#00FF80' : '#FF3B3B', fontSize: 13, marginTop: 4 }}>
                 {upside >= 0 ? '▲' : '▼'} {fmtPct(Math.abs(upside))} vs $190
@@ -373,7 +382,7 @@ function ScenariosTab({ baseRevenue, cash, shares }: any) {
               <View style={{ marginTop: 12 }}>
                 {[['Yr1 Growth', fmtPct(s.g1)],['Yr4+ Growth', fmtPct(s.g2)],['EBIT Margin', fmtPct(s.ebit)],['WACC', fmtPct(s.wacc)]].map(([k, v]) => (
                   <View key={k as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' }}>
-                    <Text style={{ color: '#94A3B8', fontSize: 11 }}>{k}</Text>
+                    <Text style={{ color: '#CBD5E1', fontSize: 11 }}>{k}</Text>
                     <Text style={{ color: '#CCCCCC', fontSize: 11, fontWeight: '600' }}>{v}</Text>
                   </View>
                 ))}
@@ -386,7 +395,7 @@ function ScenariosTab({ baseRevenue, cash, shares }: any) {
       <View style={[s2.card, { borderColor: '#F59E0B55', marginTop: 0 }]}>
         <Text style={{ color: '#F59E0B', fontWeight: '700', fontSize: 12, letterSpacing: 1 }}>PROBABILITY-WEIGHTED VALUE</Text>
         <Text style={{ color: '#FFFFFF', fontSize: 32, fontWeight: '800', marginTop: 6 }}>{fmt$(pwv, 2)}</Text>
-        <Text style={{ color: '#94A3B8', fontSize: 12, marginTop: 4 }}>
+        <Text style={{ color: '#CBD5E1', fontSize: 12, marginTop: 4 }}>
           vs $190 current  ·  {fmtPct((pwv - 190) / 190)} implied {pwv > 190 ? 'upside' : 'downside'}
         </Text>
       </View>
@@ -450,14 +459,14 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 52, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
   headerLeft: { flexDirection: 'row', alignItems: 'baseline' },
   ticker: { color: '#00FF80', fontSize: 28, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  company: { color: '#64748B', fontSize: 13, letterSpacing: 2, fontFamily: 'monospace' },
+  company: { color: '#CBD5E1', fontSize: 13, letterSpacing: 2, fontFamily: 'monospace' },
   headerRight: { alignItems: 'flex-end' },
-  headerLabel: { color: '#94A3B8', fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace' },
-  headerDate: { color: '#1e3a2a', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginTop: 2 },
+  headerLabel: { color: '#CBD5E1', fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace' },
+  headerDate: { color: '#6aaa8a', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginTop: 2 },
   tabBar: { flexDirection: 'row', backgroundColor: '#000000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, paddingHorizontal: 8 },
   tab: { paddingHorizontal: 14, paddingVertical: 12, marginRight: 2 },
   tabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
-  tabText: { color: '#64748B', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, fontFamily: 'monospace' },
+  tabText: { color: '#CBD5E1', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, fontFamily: 'monospace' },
   tabTextActive: { color: '#00FF80' },
   scroll: { flex: 1, zIndex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
@@ -467,7 +476,7 @@ const s = StyleSheet.create({
   rightPanel: { flex: 1.4, gap: 16 },
   fullPanel: { gap: 16 },
   intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
-  intrinsicLabel: { color: '#64748B', fontSize: 11, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicLabel: { color: '#CBD5E1', fontSize: 11, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
   intrinsicValue: { fontSize: 52, fontWeight: '800', fontFamily: 'monospace', lineHeight: 60 },
   upsideBadge: { marginTop: 12, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-start' },
   upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
@@ -475,18 +484,18 @@ const s = StyleSheet.create({
   tvBar: { height: 16, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
   tvFill: { height: '100%' },
   tvLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  tvLabel: { color: '#64748B', fontSize: 11 },
+  tvLabel: { color: '#CBD5E1', fontSize: 11 },
   chartLegend: { flexDirection: 'row', gap: 16, marginTop: 10 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { color: '#94A3B8', fontSize: 11 },
+  legendText: { color: '#CBD5E1', fontSize: 11 },
   tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
   th: { flex: 1, color: '#00FF80', fontSize: 11, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
   tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
-  td: { flex: 1, color: '#94A3B8', fontSize: 12, fontFamily: 'monospace' },
+  td: { flex: 1, color: '#CBD5E1', fontSize: 12, fontFamily: 'monospace' },
   simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  simpleLabel: { color: '#94A3B8', fontSize: 13 },
-  simpleVal: { color: '#94A3B8', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
+  simpleLabel: { color: '#CBD5E1', fontSize: 13 },
+  simpleVal: { color: '#CBD5E1', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
 });
 
 const p = StyleSheet.create({
@@ -498,14 +507,14 @@ const p = StyleSheet.create({
 
 const k = StyleSheet.create({
   card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8022', borderRadius: 10, padding: 14 },
-  label: { color: '#64748B', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 6 },
+  label: { color: '#CBD5E1', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 6 },
   val: { color: '#FFFFFF', fontSize: 20, fontWeight: '800', fontFamily: 'monospace' },
 });
 
 const tr = StyleSheet.create({
   row: { flexDirection: 'row' },
-  cell: { width: 90, paddingHorizontal: 8, paddingVertical: 8, color: '#94A3B8', fontSize: 12, textAlign: 'right', fontFamily: 'monospace' },
-  label: { width: 200, textAlign: 'left', color: '#94A3B8' },
+  cell: { width: 90, paddingHorizontal: 8, paddingVertical: 8, color: '#CBD5E1', fontSize: 12, textAlign: 'right', fontFamily: 'monospace' },
+  label: { width: 200, textAlign: 'left', color: '#CBD5E1' },
   sensCell: { width: 72, height: 40, paddingHorizontal: 4, paddingVertical: 6, fontSize: 12, textAlign: 'center', justifyContent: 'center', alignItems: 'center' },
 });
 

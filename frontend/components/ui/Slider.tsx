@@ -165,9 +165,9 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
 const s = StyleSheet.create({
   row: { marginBottom: 22 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { color: '#64748B', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
+  label: { color: '#94A3B8', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
   valueBtn: {},
   value: { color: '#00FF80', fontSize: 20, fontWeight: '800', fontFamily: 'monospace', letterSpacing: 1 },
   rangeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
-  rangeText: { color: '#4a7a5a', fontSize: 9, fontFamily: 'monospace' },
+  rangeText: { color: '#6aaa8a', fontSize: 9, fontFamily: 'monospace' },
 });

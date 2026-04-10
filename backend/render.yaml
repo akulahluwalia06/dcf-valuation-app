@@ -16,7 +16,7 @@ services:
         fromDatabase:
           name: dcf-mongodb
           property: connectionString
-      - key: FMP_API_KEY
+      - key: POLYGON_API_KEY
         sync: false
       - key: CLIENT_ORIGIN
         sync: false

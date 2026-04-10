@@ -10,7 +10,6 @@ import { calculateDCF, calculateSensitivityGrid, fmt$, fmtPct, fmtM, getSensitiv
 import { DCFAssumptions, FinancialSnapshot } from '../../types/dcf';
 import Slider from '../../components/ui/Slider';
 import BarChart from '../../components/charts/BarChart';
-import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 const FISCAL_YEARS = ['Yr 1', 'Yr 2', 'Yr 3', 'Yr 4', 'Yr 5', 'Yr 6', 'Yr 7'];
 const WACC_OFFSETS = [-0.02, -0.01, -0.005, 0, 0.005, 0.01, 0.02];
@@ -138,17 +137,16 @@ export default function DCFToolScreen() {
   const fcfBars = result?.projections.map((p, i) => ({
     label: `Y${i + 1}`,
     value: p.fcff,
-    color: i < 3 ? '#00C851' : '#00FF80',
+    color: i < 3 ? '#E07000' : '#FF8C00',
   })) || [];
 
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <AnimatedBackground />
 
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.replace('/(tabs)/')} activeOpacity={0.7}>
-          <Text style={s.headerTitle}>DCF<Text style={{ color: '#00FF80' }}>.</Text>TOOL</Text>
+          <Text style={s.headerTitle}>DCF<Text style={{ color: '#FF8C00' }}>.</Text>TOOL</Text>
         </TouchableOpacity>
         <Text style={s.headerSub}>SEARCH ANY TICKER  ·  AUTO-POPULATE FROM LIVE FINANCIALS  ·  INSTANT RECALCULATION</Text>
       </View>
@@ -160,7 +158,7 @@ export default function DCFToolScreen() {
           value={inputTicker}
           onChangeText={(t: string) => setInputTicker(t.toUpperCase())}
           placeholder="AAPL  SHOP.TO  NVDA  RY.TO  TSLA  META..."
-          placeholderTextColor="#4a7a5a"
+          placeholderTextColor="#7a4a00"
           autoCapitalize="characters"
           autoCorrect={false}
           onSubmitEditing={handleSearch}
@@ -210,14 +208,14 @@ export default function DCFToolScreen() {
           {result && upside !== null && (
             <View style={{ alignItems: 'flex-end', marginLeft: 16 }}>
               <Text style={s.priceLabel}>INTRINSIC</Text>
-              <Text style={[s.priceVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+              <Text style={[s.priceVal, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                 {fmt$(result.intrinsicPerShare.blended, 2)}
               </Text>
             </View>
           )}
           <TouchableOpacity style={s.resetBtn} onPress={handleReset} disabled={resetting}>
             {resetting
-              ? <ActivityIndicator size="small" color="#00FF80" />
+              ? <ActivityIndicator size="small" color="#FF8C00" />
               : <Text style={s.resetBtnText}>↺ RESET</Text>
             }
           </TouchableOpacity>
@@ -247,7 +245,7 @@ export default function DCFToolScreen() {
 
       {snapshotLoading && (
         <View style={s.emptyState}>
-          <ActivityIndicator size="large" color="#00FF80" />
+          <ActivityIndicator size="large" color="#FF8C00" />
           <Text style={[s.emptySub, { marginTop: 16 }]}>LOADING FINANCIAL DATA...</Text>
         </View>
       )}
@@ -312,9 +310,9 @@ export default function DCFToolScreen() {
               {/* RIGHT — live output */}
               <View style={isWide ? s.rightPanel : { marginTop: 16 }}>
                 {/* Intrinsic card */}
-                <View style={[s.intrinsicCard, { borderColor: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                <View style={[s.intrinsicCard, { borderColor: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                   <Text style={s.intrinsicLabel}>INTRINSIC VALUE PER SHARE</Text>
-                  <Text style={[s.intrinsicVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                  <Text style={[s.intrinsicVal, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                     {fmt$(result.intrinsicPerShare.blended, 2)}
                   </Text>
                   <View style={s.methodRow}>
@@ -328,14 +326,14 @@ export default function DCFToolScreen() {
                     </View>
                     <View style={s.methodItem}>
                       <Text style={s.methodLabel}>BLENDED</Text>
-                      <Text style={[s.methodVal, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                      <Text style={[s.methodVal, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                         {fmt$(result.intrinsicPerShare.blended, 2)}
                       </Text>
                     </View>
                   </View>
                   {currentPrice > 0 && upside !== null && (
-                    <View style={[s.upsideBadge, { borderColor: isUp ? '#00FF80' : '#FF3B3B', backgroundColor: isUp ? '#00FF8011' : '#FF3B3B11' }]}>
-                      <Text style={[s.upsideText, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                    <View style={[s.upsideBadge, { borderColor: isUp ? '#FF8C00' : '#FF3B3B', backgroundColor: isUp ? '#FF8C0011' : '#FF3B3B11' }]}>
+                      <Text style={[s.upsideText, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                         {isUp ? '▲' : '▼'} {fmtPct(Math.abs(upside))} vs {fmt$(currentPrice, 2)}  ·  {isUp ? 'UPSIDE' : 'DOWNSIDE'}
                       </Text>
                     </View>
@@ -353,8 +351,8 @@ export default function DCFToolScreen() {
                 {/* TV bar */}
                 <Panel title="TERMINAL VALUE AS % OF EV">
                   <View style={s.tvBar}>
-                    <View style={[s.tvFill, { flex: Math.max(1 - result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#00C851' }]} />
-                    <View style={[s.tvFill, { flex: Math.max(result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#00FF80' }]} />
+                    <View style={[s.tvFill, { flex: Math.max(1 - result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#E07000' }]} />
+                    <View style={[s.tvFill, { flex: Math.max(result.tvAsPercentEV.ggm, 0.01), backgroundColor: '#FF8C00' }]} />
                   </View>
                   <View style={s.tvLabels}>
                     <Text style={s.tvLabel}>FCFs ({fmtPct(1 - result.tvAsPercentEV.ggm, 0)})</Text>
@@ -375,10 +373,10 @@ export default function DCFToolScreen() {
                     ))}
                   </View>
                   {result.projections.map((p, i) => (
-                    <View key={i} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
+                    <View key={i} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
                       <Text style={s.td}>Yr {i + 1}</Text>
                       <Text style={s.td}>{fmtM(p.revenue)}</Text>
-                      <Text style={[s.td, { color: '#00FF80' }]}>{fmtM(p.fcff)}</Text>
+                      <Text style={[s.td, { color: '#FF8C00' }]}>{fmtM(p.fcff)}</Text>
                       <Text style={s.td}>{fmtM(p.pvFcff)}</Text>
                     </View>
                   ))}
@@ -404,9 +402,9 @@ export default function DCFToolScreen() {
                 { label: 'TV as % of EV (GGM)', val: fmtPct(result.tvAsPercentEV.ggm) },
                 { label: 'TV as % of EV (Exit)', val: fmtPct(result.tvAsPercentEV.exit) },
               ].map((row: any, i) => (
-                <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
-                  <Text style={[s.simpleLabel, row.bold && { color: '#CCC' }, row.accent && { color: '#00FF80' }]}>{row.label}</Text>
-                  <Text style={[s.simpleVal, row.bold && { fontWeight: '700' }, row.accent && { color: '#00FF80', fontSize: 20 }]}>{row.val}</Text>
+                <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
+                  <Text style={[s.simpleLabel, row.bold && { color: '#CCC' }, row.accent && { color: '#FF8C00' }]}>{row.label}</Text>
+                  <Text style={[s.simpleVal, row.bold && { fontWeight: '700' }, row.accent && { color: '#FF8C00', fontSize: 20 }]}>{row.val}</Text>
                 </View>
               ))}
             </Panel>
@@ -414,21 +412,21 @@ export default function DCFToolScreen() {
 
           {activeTab === 'sensitivity' && (
             <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE">
-              <Text style={{ color: '#CBD5E1', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
+              <Text style={{ color: '#CBD5E1', fontSize: 17, marginBottom: 12, fontFamily: 'monospace' }}>
                 Green = upside  ·  Yellow = neutral  ·  Red = downside  {currentPrice ? `vs ${fmt$(currentPrice, 2)}` : ''}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View>
-                  <View style={[tr.row, { backgroundColor: '#001a00' }]}>
-                    <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
-                    {TGR_VALUES.map(t => <Text key={t} style={[tr.sensCell, { color: '#00FF80' }]}>{fmtPct(t)}</Text>)}
+                  <View style={[tr.row, { backgroundColor: '#1a0800' }]}>
+                    <Text style={[tr.sensCell, { color: '#FF8C00', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
+                    {TGR_VALUES.map(t => <Text key={t} style={[tr.sensCell, { color: '#FF8C00' }]}>{fmtPct(t)}</Text>)}
                   </View>
                   {sensGrid.map((row: any, wi: number) => (
                     <View key={wi} style={tr.row}>
-                      <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80, backgroundColor: '#001a00' }]}>{fmtPct(row.wacc)}</Text>
+                      <Text style={[tr.sensCell, { color: '#FF8C00', fontWeight: '700', width: 80, backgroundColor: '#1a0800' }]}>{fmtPct(row.wacc)}</Text>
                       {row.values.map((cell: any, ti: number) => (
                         <View key={ti} style={[tr.sensCell, { backgroundColor: getSensitivityBg(cell.delta), justifyContent: 'center', alignItems: 'center' }]}>
-                          <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 11, fontWeight: '700' }}>{fmt$(cell.price, 0)}</Text>
+                          <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 17, fontWeight: '700' }}>{fmt$(cell.price, 0)}</Text>
                         </View>
                       ))}
                     </View>
@@ -457,86 +455,86 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 
 function KPI({ label, val, accent }: { label: string; val: string; accent?: boolean }) {
   return (
-    <View style={[k.card, accent && { borderColor: '#00FF8044' }]}>
+    <View style={[k.card, accent && { borderColor: '#FF8C0044' }]}>
       <Text style={k.label}>{label}</Text>
-      <Text style={[k.val, accent && { color: '#00FF80' }]}>{val}</Text>
+      <Text style={[k.val, accent && { color: '#FF8C00' }]}>{val}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },
-  header: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
-  headerTitle: { color: '#FFFFFF', fontSize: 26, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  headerSub: { color: '#6aaa8a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
-  searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#000', zIndex: 1, borderBottomWidth: 1, borderBottomColor: '#00FF8011' },
-  searchInput: { flex: 1, backgroundColor: '#050505', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, color: '#00FF80', fontSize: 15, borderWidth: 1, borderColor: '#00FF8033', fontFamily: 'monospace', letterSpacing: 2 },
-  searchBtn: { backgroundColor: '#00FF80', borderRadius: 8, paddingHorizontal: 20, justifyContent: 'center' },
-  searchBtnText: { color: '#000', fontWeight: '800', fontSize: 13, letterSpacing: 1.5, fontFamily: 'monospace' },
+  header: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#FF8C0022', zIndex: 1 },
+  headerTitle: { color: '#FFFFFF', fontSize: 30, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
+  headerSub: { color: '#aa7a3a', fontSize: 16, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
+  searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#000', zIndex: 1, borderBottomWidth: 1, borderBottomColor: '#FF8C0011' },
+  searchInput: { flex: 1, backgroundColor: '#050505', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, color: '#FF8C00', fontSize: 22, borderWidth: 1, borderColor: '#FF8C0033', fontFamily: 'monospace', letterSpacing: 2 },
+  searchBtn: { backgroundColor: '#FF8C00', borderRadius: 8, paddingHorizontal: 20, justifyContent: 'center' },
+  searchBtnText: { color: '#000', fontWeight: '800', fontSize: 16, letterSpacing: 1.5, fontFamily: 'monospace' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 8, zIndex: 1 },
-  quickChip: { backgroundColor: '#050505', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#00FF8033' },
-  quickText: { color: '#00CC66', fontWeight: '700', fontSize: 12, fontFamily: 'monospace' },
+  quickChip: { backgroundColor: '#050505', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#FF8C0033' },
+  quickText: { color: '#E07000', fontWeight: '700', fontSize: 22, fontFamily: 'monospace' },
   errorBox: { backgroundColor: '#1a0000', margin: 12, borderRadius: 8, padding: 14, borderWidth: 1, borderColor: '#FF3B3B44', zIndex: 1 },
-  errorText: { color: '#FF3B3B', fontSize: 13, fontFamily: 'monospace' },
-  companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#050505', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, gap: 12 },
-  companyTickerBox: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#00FF8033' },
-  companyTicker: { color: '#00FF80', fontWeight: '800', fontSize: 14, fontFamily: 'monospace' },
-  resetBtn: { marginLeft: 8, borderWidth: 1, borderColor: '#00FF8044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
-  resetBtnText: { color: '#00FF80', fontSize: 11, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
-  companyName: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
-  companySub: { color: '#CBD5E1', fontSize: 11, marginTop: 2 },
-  priceLabel: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
-  priceVal: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
-  subTabBar: { flexDirection: 'row', backgroundColor: '#000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
+  errorText: { color: '#FF3B3B', fontSize: 16, fontFamily: 'monospace' },
+  companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#050505', borderBottomWidth: 1, borderBottomColor: '#FF8C0022', zIndex: 1, gap: 12 },
+  companyTickerBox: { backgroundColor: '#1a0800', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#FF8C0033' },
+  companyTicker: { color: '#FF8C00', fontWeight: '800', fontSize: 17, fontFamily: 'monospace' },
+  resetBtn: { marginLeft: 8, borderWidth: 1, borderColor: '#FF8C0044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  resetBtnText: { color: '#FF8C00', fontSize: 17, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
+  companyName: { color: '#CBD5E1', fontSize: 16, fontWeight: '600' },
+  companySub: { color: '#CBD5E1', fontSize: 17, marginTop: 2 },
+  priceLabel: { color: '#CBD5E1', fontSize: 22, letterSpacing: 1.5, fontFamily: 'monospace' },
+  priceVal: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', fontFamily: 'monospace' },
+  subTabBar: { flexDirection: 'row', backgroundColor: '#000', borderBottomWidth: 1, borderBottomColor: '#FF8C0022', zIndex: 1 },
   subTab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  subTabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
-  subTabText: { color: '#6aaa8a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
-  subTabTextActive: { color: '#00FF80' },
+  subTabActive: { borderBottomWidth: 2, borderBottomColor: '#FF8C00' },
+  subTabText: { color: '#aa7a3a', fontSize: 22, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  subTabTextActive: { color: '#FF8C00' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, zIndex: 1 },
-  emptyTitle: { color: '#00FF80', fontSize: 16, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 12 },
-  emptySub: { color: '#6aaa8a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
+  emptyTitle: { color: '#FF8C00', fontSize: 16, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 12 },
+  emptySub: { color: '#aa7a3a', fontSize: 22, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
   scroll: { flex: 1, zIndex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
   twoCol: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
   leftPanel: { flex: 1, gap: 16, maxWidth: 420 },
   rightPanel: { flex: 1.4, gap: 16 },
   intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
-  intrinsicLabel: { color: '#CBD5E1', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicLabel: { color: '#CBD5E1', fontSize: 16, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
   intrinsicVal: { fontSize: 48, fontWeight: '800', fontFamily: 'monospace', lineHeight: 56 },
-  methodRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#0a0a0a' },
+  methodRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#0d0d0d' },
   methodItem: { alignItems: 'center' },
-  methodLabel: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
-  methodVal: { color: '#CBD5E1', fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
+  methodLabel: { color: '#CBD5E1', fontSize: 22, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
+  methodVal: { color: '#CBD5E1', fontSize: 17, fontWeight: '700', fontFamily: 'monospace' },
   upsideBadge: { marginTop: 14, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
-  upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
+  upsideText: { fontSize: 22, fontWeight: '700', fontFamily: 'monospace' },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tvBar: { height: 14, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
   tvFill: { height: '100%' },
   tvLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  tvLabel: { color: '#CBD5E1', fontSize: 10, fontFamily: 'monospace' },
-  tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
-  th: { flex: 1, color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
+  tvLabel: { color: '#CBD5E1', fontSize: 16, fontFamily: 'monospace' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#1a0800', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
+  th: { flex: 1, color: '#FF8C00', fontSize: 16, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
   tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
-  td: { flex: 1, color: '#CBD5E1', fontSize: 12, fontFamily: 'monospace' },
+  td: { flex: 1, color: '#CBD5E1', fontSize: 22, fontFamily: 'monospace' },
   simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  simpleLabel: { color: '#CBD5E1', fontSize: 13, flex: 1 },
-  simpleVal: { color: '#CBD5E1', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
+  simpleLabel: { color: '#CBD5E1', fontSize: 16, flex: 1 },
+  simpleVal: { color: '#CBD5E1', fontSize: 16, fontWeight: '600', fontFamily: 'monospace' },
 });
 
 const p = StyleSheet.create({
-  panel: { backgroundColor: '#050505', borderWidth: 1, borderColor: '#00FF8015', borderRadius: 12, padding: 16, marginBottom: 16 },
+  panel: { backgroundColor: '#050505', borderWidth: 1, borderColor: '#FF8C0015', borderRadius: 12, padding: 16, marginBottom: 16 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#00FF80', marginRight: 8 },
-  title: { color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FF8C00', marginRight: 8 },
+  title: { color: '#FF8C00', fontSize: 16, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
 });
 
 const k = StyleSheet.create({
-  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8033', borderRadius: 10, padding: 12 },
-  label: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
-  val: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
+  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#FF8C0033', borderRadius: 10, padding: 12 },
+  label: { color: '#CBD5E1', fontSize: 22, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
+  val: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', fontFamily: 'monospace' },
 });
 
 const tr = StyleSheet.create({
   row: { flexDirection: 'row' },
-  sensCell: { width: 72, height: 40, paddingHorizontal: 4, fontSize: 12, textAlign: 'center' },
+  sensCell: { width: 72, height: 40, paddingHorizontal: 4, fontSize: 22, textAlign: 'center' },
 });

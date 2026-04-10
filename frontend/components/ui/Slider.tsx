@@ -38,19 +38,19 @@ function injectSliderCSS() {
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: #00FF80;
+      background: #FF8C00;
       cursor: pointer;
       border: 2px solid #000;
-      box-shadow: 0 0 6px #00FF8066;
+      box-shadow: 0 0 6px #FF8C0066;
     }
     .dcf-slider::-moz-range-thumb {
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: #00FF80;
+      background: #FF8C00;
       cursor: pointer;
       border: 2px solid #000;
-      box-shadow: 0 0 6px #00FF8066;
+      box-shadow: 0 0 6px #FF8C0066;
     }
     .dcf-slider::-webkit-slider-runnable-track {
       height: 6px;
@@ -59,19 +59,19 @@ function injectSliderCSS() {
     .dcf-slider::-moz-range-track {
       height: 6px;
       border-radius: 4px;
-      background: #1a2a1a;
+      background: #1a0800;
     }
     .dcf-slider::-moz-range-progress {
       height: 6px;
       border-radius: 4px;
-      background: #00FF80;
+      background: #FF8C00;
     }
     .dcf-value-input {
       background: transparent;
       border: none;
-      border-bottom: 1.5px solid #00FF80;
-      color: #00FF80;
-      font-size: 20px;
+      border-bottom: 1.5px solid #FF8C00;
+      color: #FF8C00;
+      font-size: 22px;
       font-weight: 800;
       font-family: monospace;
       letter-spacing: 1px;
@@ -98,7 +98,7 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
 
   const display = formatValue ? formatValue(value) : value.toFixed(3);
   const pct = max > min ? Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100)) : 0;
-  const trackBg = `linear-gradient(to right, #00FF80 0%, #00FF80 ${pct}%, #1a2a1a ${pct}%, #1a2a1a 100%)`;
+  const trackBg = `linear-gradient(to right, #FF8C00 0%, #FF8C00 ${pct}%, #1a2a1a ${pct}%, #1a2a1a 100%)`;
 
   function startEdit() {
     setEditText(display);
@@ -165,9 +165,9 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
 const s = StyleSheet.create({
   row: { marginBottom: 22 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { color: '#94A3B8', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
+  label: { color: '#94A3B8', fontSize: 16, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
   valueBtn: {},
-  value: { color: '#00FF80', fontSize: 20, fontWeight: '800', fontFamily: 'monospace', letterSpacing: 1 },
+  value: { color: '#FF8C00', fontSize: 22, fontWeight: '800', fontFamily: 'monospace', letterSpacing: 1 },
   rangeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
-  rangeText: { color: '#6aaa8a', fontSize: 9, fontFamily: 'monospace' },
+  rangeText: { color: '#aa7a3a', fontSize: 22, fontFamily: 'monospace' },
 });

@@ -10,7 +10,6 @@ import { calculateDCF, fmt$, fmtPct, fmtM, calculateSensitivityGrid, getSensitiv
 import { DCFAssumptions } from '../../types/dcf';
 import Slider from '../../components/ui/Slider';
 import BarChart from '../../components/charts/BarChart';
-import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -97,7 +96,7 @@ export default function PANWScreen() {
   const fcfBars = result.projections.map((p, i) => ({
     label: `Y${i + 1}`,
     value: p.fcff,
-    color: i < 3 ? '#00C851' : '#00FF80',
+    color: i < 3 ? '#E07000' : '#FF8C00',
   }));
 
   const WACC_OFFSETS = [-0.015, -0.01, -0.005, 0, 0.005, 0.01, 0.015];
@@ -109,7 +108,6 @@ export default function PANWScreen() {
 
   return (
     <View style={s.root}>
-      <AnimatedBackground />
 
       {/* Header */}
       <View style={s.header}>
@@ -181,13 +179,13 @@ export default function PANWScreen() {
             {/* RIGHT — Output */}
             <View style={isWide ? s.rightPanel : s.fullPanel}>
               {/* Main intrinsic card */}
-              <View style={[s.intrinsicCard, { borderColor: isUp ? '#00FF80' : '#FF3B3B' }]}>
+              <View style={[s.intrinsicCard, { borderColor: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                 <Text style={s.intrinsicLabel}>INTRINSIC VALUE PER SHARE</Text>
-                <Text style={[s.intrinsicValue, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                <Text style={[s.intrinsicValue, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                   {fmt$(result.intrinsicPerShare.blended, 2)}
                 </Text>
-                <View style={[s.upsideBadge, { backgroundColor: isUp ? '#00FF8022' : '#FF3B3B22', borderColor: isUp ? '#00FF80' : '#FF3B3B' }]}>
-                  <Text style={[s.upsideText, { color: isUp ? '#00FF80' : '#FF3B3B' }]}>
+                <View style={[s.upsideBadge, { backgroundColor: isUp ? '#FF8C0022' : '#FF3B3B22', borderColor: isUp ? '#FF8C00' : '#FF3B3B' }]}>
+                  <Text style={[s.upsideText, { color: isUp ? '#FF8C00' : '#FF3B3B' }]}>
                     {isUp ? '▲' : '▼'} {fmtPct(Math.abs(upside))} vs ${CURRENT_PRICE}  ·  {isUp ? 'UPSIDE' : 'DOWNSIDE'} TO CURRENT
                   </Text>
                 </View>
@@ -204,8 +202,8 @@ export default function PANWScreen() {
               {/* TV % bar */}
               <Panel title="TERMINAL VALUE AS % OF EV">
                 <View style={s.tvBar}>
-                  <View style={[s.tvFill, { flex: 1 - result.tvAsPercentEV.ggm, backgroundColor: '#00C851' }]} />
-                  <View style={[s.tvFill, { flex: result.tvAsPercentEV.ggm, backgroundColor: '#00FF80' }]} />
+                  <View style={[s.tvFill, { flex: 1 - result.tvAsPercentEV.ggm, backgroundColor: '#E07000' }]} />
+                  <View style={[s.tvFill, { flex: result.tvAsPercentEV.ggm, backgroundColor: '#FF8C00' }]} />
                 </View>
                 <View style={s.tvLabels}>
                   <Text style={s.tvLabel}>FCFs ({fmtPct(1 - result.tvAsPercentEV.ggm, 0)})</Text>
@@ -217,8 +215,8 @@ export default function PANWScreen() {
               <Panel title="PROJECTED FREE CASH FLOWS ($M)">
                 <BarChart bars={fcfBars} height={110} />
                 <View style={s.chartLegend}>
-                  <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: '#00C851' }]} /><Text style={s.legendText}>Phase 1 ({fmtPct(phase1Growth, 0)} growth)</Text></View>
-                  <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: '#00FF80' }]} /><Text style={s.legendText}>Phase 2 ({fmtPct(phase2Growth, 0)} growth)</Text></View>
+                  <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: '#E07000' }]} /><Text style={s.legendText}>Phase 1 ({fmtPct(phase1Growth, 0)} growth)</Text></View>
+                  <View style={s.legendItem}><View style={[s.legendDot, { backgroundColor: '#FF8C00' }]} /><Text style={s.legendText}>Phase 2 ({fmtPct(phase2Growth, 0)} growth)</Text></View>
                 </View>
               </Panel>
 
@@ -230,10 +228,10 @@ export default function PANWScreen() {
                   ))}
                 </View>
                 {result.projections.map((p, i) => (
-                  <View key={i} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#0a0a0a' : '#111111' }]}>
+                  <View key={i} style={[s.tableRow, { backgroundColor: i % 2 === 0 ? '#0d0d0d' : '#111111' }]}>
                     <Text style={s.td}>FY{2026 + i}</Text>
                     <Text style={s.td}>{fmtM(p.revenue)}</Text>
-                    <Text style={[s.td, { color: '#00FF80' }]}>{fmtM(p.fcff)}</Text>
+                    <Text style={[s.td, { color: '#FF8C00' }]}>{fmtM(p.fcff)}</Text>
                     <Text style={s.td}>{fmtM(p.pvFcff)}</Text>
                   </View>
                 ))}
@@ -259,9 +257,9 @@ function DCFEngineTab({ result, assumptions }: any) {
     <Panel title="FCFF PROJECTION ENGINE">
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
-          <View style={[tr.row, { backgroundColor: '#001a00' }]}>
-            <Text style={[tr.cell, tr.label, { color: '#00FF80' }]}>Line Item</Text>
-            {PROJ_YEARS.map(y => <Text key={y} style={[tr.cell, { color: '#00FF80', fontWeight: '700', textAlign: 'center' }]}>{y}</Text>)}
+          <View style={[tr.row, { backgroundColor: '#1a0800' }]}>
+            <Text style={[tr.cell, tr.label, { color: '#FF8C00' }]}>Line Item</Text>
+            {PROJ_YEARS.map(y => <Text key={y} style={[tr.cell, { color: '#FF8C00', fontWeight: '700', textAlign: 'center' }]}>{y}</Text>)}
           </View>
           {[
             { label: 'Revenue ($M)', key: 'revenue', fmt: (v: number) => `$${v.toFixed(0)}` },
@@ -277,10 +275,10 @@ function DCFEngineTab({ result, assumptions }: any) {
             { label: 'Discount Factor', key: 'discountFactor', fmt: (v: number) => v.toFixed(4) },
             { label: 'PV of FCFF ($M)', key: 'pvFcff', fmt: (v: number) => `$${v.toFixed(0)}`, bold: true },
           ].map((row, ri) => (
-            <View key={row.label} style={[tr.row, { backgroundColor: ri % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
-              <Text style={[tr.cell, tr.label, row.bold && { color: '#00FF80', fontWeight: '700' }]}>{row.label}</Text>
+            <View key={row.label} style={[tr.row, { backgroundColor: ri % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
+              <Text style={[tr.cell, tr.label, row.bold && { color: '#FF8C00', fontWeight: '700' }]}>{row.label}</Text>
               {result.projections.map((p: any, i: number) => (
-                <Text key={i} style={[tr.cell, row.bold && { color: '#00FF80', fontWeight: '700' }]}>{row.fmt(p[row.key])}</Text>
+                <Text key={i} style={[tr.cell, row.bold && { color: '#FF8C00', fontWeight: '700' }]}>{row.fmt(p[row.key])}</Text>
               ))}
             </View>
           ))}
@@ -294,9 +292,9 @@ function DCFEngineTab({ result, assumptions }: any) {
           { label: 'Exit TV', val: fmtM(result.terminalValues.exitTV) },
           { label: 'PV of Exit TV', val: fmtM(result.terminalValues.pvExit), bold: true },
         ].map((r, i) => (
-          <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
-            <Text style={[s.simpleLabel, r.bold && { color: '#00FF80' }]}>{r.label}</Text>
-            <Text style={[s.simpleVal, r.bold && { color: '#00FF80', fontWeight: '700' }]}>{r.val}</Text>
+          <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
+            <Text style={[s.simpleLabel, r.bold && { color: '#FF8C00' }]}>{r.label}</Text>
+            <Text style={[s.simpleVal, r.bold && { color: '#FF8C00', fontWeight: '700' }]}>{r.val}</Text>
           </View>
         ))}
       </View>
@@ -322,12 +320,12 @@ function WACCTab({ wacc, taxRate }: any) {
   return (
     <Panel title="WACC BUILD-UP  —  CAPM">
       {rows.map((r, i) => (
-        <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a' }]}>
+        <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
           <View>
-            <Text style={[s.simpleLabel, r.bold && { color: r.accent ? '#00FF80' : '#CCCCCC' }]}>{r.label}</Text>
+            <Text style={[s.simpleLabel, r.bold && { color: r.accent ? '#FF8C00' : '#CCCCCC' }]}>{r.label}</Text>
             {r.note && <Text style={{ color: '#CBD5E1', fontSize: 10 }}>{r.note}</Text>}
           </View>
-          <Text style={[s.simpleVal, r.bold && { color: r.accent ? '#00FF80' : '#FFFFFF', fontSize: r.accent ? 22 : 14, fontWeight: '700' }]}>{r.val}</Text>
+          <Text style={[s.simpleVal, r.bold && { color: r.accent ? '#FF8C00' : '#FFFFFF', fontSize: r.accent ? 22 : 14, fontWeight: '700' }]}>{r.val}</Text>
         </View>
       ))}
     </Panel>
@@ -337,19 +335,19 @@ function WACCTab({ wacc, taxRate }: any) {
 function SensitivityTab({ grid, tgrValues }: any) {
   return (
     <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE  (Blended / Share)">
-      <Text style={{ color: '#CBD5E1', fontSize: 11, marginBottom: 12 }}>Green = upside vs $190  ·  Yellow = neutral  ·  Red = downside</Text>
+      <Text style={{ color: '#CBD5E1', fontSize: 17, marginBottom: 12 }}>Green = upside vs $190  ·  Yellow = neutral  ·  Red = downside</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
-          <View style={[tr.row, { backgroundColor: '#001a00' }]}>
-            <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
-            {tgrValues.map((t: number) => <Text key={t} style={[tr.sensCell, { color: '#00FF80' }]}>{fmtPct(t)}</Text>)}
+          <View style={[tr.row, { backgroundColor: '#1a0800' }]}>
+            <Text style={[tr.sensCell, { color: '#FF8C00', fontWeight: '700', width: 80 }]}>WACC\TGR</Text>
+            {tgrValues.map((t: number) => <Text key={t} style={[tr.sensCell, { color: '#FF8C00' }]}>{fmtPct(t)}</Text>)}
           </View>
           {grid.map((row: any, wi: number) => (
             <View key={wi} style={tr.row}>
-              <Text style={[tr.sensCell, { color: '#00FF80', fontWeight: '700', width: 80, backgroundColor: '#001a00' }]}>{fmtPct(row.wacc)}</Text>
+              <Text style={[tr.sensCell, { color: '#FF8C00', fontWeight: '700', width: 80, backgroundColor: '#1a0800' }]}>{fmtPct(row.wacc)}</Text>
               {row.values.map((cell: any, ti: number) => (
                 <View key={ti} style={[tr.sensCell, { backgroundColor: getSensitivityBg(cell.delta), justifyContent: 'center', alignItems: 'center' }]}>
-                  <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 11, fontWeight: '700' }}>{fmt$(cell.price, 0)}</Text>
+                  <Text style={{ color: getSensitivityColor(cell.delta), fontSize: 17, fontWeight: '700' }}>{fmt$(cell.price, 0)}</Text>
                 </View>
               ))}
             </View>
@@ -362,7 +360,7 @@ function SensitivityTab({ grid, tgrValues }: any) {
 
 function ScenariosTab({ baseRevenue, cash, shares }: any) {
   const scenarios = [
-    { name: 'BULL', color: '#00FF80', prob: 0.30, g1: 0.20, g2: 0.13, ebit: 0.32, wacc: 0.09, tgr: 0.04, narrative: 'AI security boom. Platform consolidation. NGS ARR >$12B.' },
+    { name: 'BULL', color: '#FF8C00', prob: 0.30, g1: 0.20, g2: 0.13, ebit: 0.32, wacc: 0.09, tgr: 0.04, narrative: 'AI security boom. Platform consolidation. NGS ARR >$12B.' },
     { name: 'BASE', color: '#0EA5E9', prob: 0.50, g1: 0.16, g2: 0.10, ebit: 0.28, wacc: 0.095, tgr: 0.035, narrative: 'Mgmt guidance + consensus. Gradual margin expansion.' },
     { name: 'BEAR', color: '#FF3B3B', prob: 0.20, g1: 0.12, g2: 0.06, ebit: 0.24, wacc: 0.105, tgr: 0.025, narrative: 'Macro IT cuts. Competition intensifies. Margin compression.' },
   ];
@@ -389,16 +387,16 @@ function ScenariosTab({ baseRevenue, cash, shares }: any) {
                 <View style={[s2.pill, { backgroundColor: s.color + '22' }]}><Text style={[s2.pillText, { color: s.color }]}>{s.name}</Text></View>
                 <Text style={{ color: '#CBD5E1', fontSize: 12 }}>p = {fmtPct(s.prob, 0)}</Text>
               </View>
-              <Text style={{ color: '#CBD5E1', fontSize: 12, marginBottom: 12, lineHeight: 18 }}>{s.narrative}</Text>
+              <Text style={{ color: '#CBD5E1', fontSize: 22, marginBottom: 12, lineHeight: 18 }}>{s.narrative}</Text>
               <Text style={[s2.price, { color: s.color }]}>{fmt$(s.result.intrinsicPerShare.blended, 2)}</Text>
-              <Text style={{ color: upside >= 0 ? '#00FF80' : '#FF3B3B', fontSize: 13, marginTop: 4 }}>
+              <Text style={{ color: upside >= 0 ? '#FF8C00' : '#FF3B3B', fontSize: 16, marginTop: 4 }}>
                 {upside >= 0 ? '▲' : '▼'} {fmtPct(Math.abs(upside))} vs $190
               </Text>
               <View style={{ marginTop: 12 }}>
                 {[['Yr1 Growth', fmtPct(s.g1)],['Yr4+ Growth', fmtPct(s.g2)],['EBIT Margin', fmtPct(s.ebit)],['WACC', fmtPct(s.wacc)]].map(([k, v]) => (
                   <View key={k as string} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#1a1a1a' }}>
                     <Text style={{ color: '#CBD5E1', fontSize: 11 }}>{k}</Text>
-                    <Text style={{ color: '#CCCCCC', fontSize: 11, fontWeight: '600' }}>{v}</Text>
+                    <Text style={{ color: '#CCCCCC', fontSize: 17, fontWeight: '600' }}>{v}</Text>
                   </View>
                 ))}
               </View>
@@ -408,9 +406,9 @@ function ScenariosTab({ baseRevenue, cash, shares }: any) {
       </View>
 
       <View style={[s2.card, { borderColor: '#F59E0B55', marginTop: 0 }]}>
-        <Text style={{ color: '#F59E0B', fontWeight: '700', fontSize: 12, letterSpacing: 1 }}>PROBABILITY-WEIGHTED VALUE</Text>
-        <Text style={{ color: '#FFFFFF', fontSize: 32, fontWeight: '800', marginTop: 6 }}>{fmt$(pwv, 2)}</Text>
-        <Text style={{ color: '#CBD5E1', fontSize: 12, marginTop: 4 }}>
+        <Text style={{ color: '#F59E0B', fontWeight: '700', fontSize: 22, letterSpacing: 1 }}>PROBABILITY-WEIGHTED VALUE</Text>
+        <Text style={{ color: '#FFFFFF', fontSize: 36, fontWeight: '800', marginTop: 6 }}>{fmt$(pwv, 2)}</Text>
+        <Text style={{ color: '#CBD5E1', fontSize: 22, marginTop: 4 }}>
           vs $190 current  ·  {fmtPct((pwv - 190) / 190)} implied {pwv > 190 ? 'upside' : 'downside'}
         </Text>
       </View>
@@ -437,9 +435,9 @@ function BridgeTab({ result, assumptions, currentPrice }: any) {
   return (
     <Panel title="EV → EQUITY → PER SHARE BRIDGE">
       {rows.map((r, i) => (
-        <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0a0a0a', paddingLeft: r.indent ? 32 : 16 }]}>
-          <Text style={[s.simpleLabel, r.bold && { color: r.accent ? '#00FF80' : '#CCCCCC' }]}>{r.label}</Text>
-          <Text style={[s.simpleVal, r.bold && { fontWeight: '700' }, r.accent && { color: '#00FF80', fontSize: 22 }]}>{r.val}</Text>
+        <View key={i} style={[s.simpleRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d', paddingLeft: r.indent ? 32 : 16 }]}>
+          <Text style={[s.simpleLabel, r.bold && { color: r.accent ? '#FF8C00' : '#CCCCCC' }]}>{r.label}</Text>
+          <Text style={[s.simpleVal, r.bold && { fontWeight: '700' }, r.accent && { color: '#FF8C00', fontSize: 22 }]}>{r.val}</Text>
         </View>
       ))}
     </Panel>
@@ -461,9 +459,9 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 
 function KPICard({ label, val, accent }: { label: string; val: string; accent?: boolean }) {
   return (
-    <View style={[k.card, accent && { borderColor: '#00FF8044' }]}>
+    <View style={[k.card, accent && { borderColor: '#FF8C0044' }]}>
       <Text style={k.label}>{label}</Text>
-      <Text style={[k.val, accent && { color: '#00FF80' }]}>{val}</Text>
+      <Text style={[k.val, accent && { color: '#FF8C00' }]}>{val}</Text>
     </View>
   );
 }
@@ -471,20 +469,20 @@ function KPICard({ label, val, accent }: { label: string; val: string; accent?: 
 // ── Styles ─────────────────────────────────────────────────
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 52, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingTop: 52, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#FF8C0022', zIndex: 1 },
   headerLeft: { flexDirection: 'row', alignItems: 'baseline' },
-  ticker: { color: '#00FF80', fontSize: 28, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  company: { color: '#CBD5E1', fontSize: 13, letterSpacing: 2, fontFamily: 'monospace' },
+  ticker: { color: '#FF8C00', fontSize: 36, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
+  company: { color: '#CBD5E1', fontSize: 16, letterSpacing: 2, fontFamily: 'monospace' },
   headerRight: { alignItems: 'flex-end', gap: 4 },
-  resetBtn: { borderWidth: 1, borderColor: '#00FF8044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginTop: 4 },
-  resetBtnText: { color: '#00FF80', fontSize: 11, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
-  headerLabel: { color: '#CBD5E1', fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace' },
-  headerDate: { color: '#6aaa8a', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginTop: 2 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#000000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, paddingHorizontal: 8 },
+  resetBtn: { borderWidth: 1, borderColor: '#FF8C0044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginTop: 4 },
+  resetBtnText: { color: '#FF8C00', fontSize: 17, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
+  headerLabel: { color: '#CBD5E1', fontSize: 22, letterSpacing: 1.5, fontFamily: 'monospace' },
+  headerDate: { color: '#aa7a3a', fontSize: 16, letterSpacing: 1, fontFamily: 'monospace', marginTop: 2 },
+  tabBar: { flexDirection: 'row', backgroundColor: '#000000', borderBottomWidth: 1, borderBottomColor: '#FF8C0022', zIndex: 1, paddingHorizontal: 8 },
   tab: { paddingHorizontal: 14, paddingVertical: 12, marginRight: 2 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
-  tabText: { color: '#CBD5E1', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, fontFamily: 'monospace' },
-  tabTextActive: { color: '#00FF80' },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: '#FF8C00' },
+  tabText: { color: '#CBD5E1', fontSize: 22, fontWeight: '600', letterSpacing: 0.5, fontFamily: 'monospace' },
+  tabTextActive: { color: '#FF8C00' },
   scroll: { flex: 1, zIndex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
   twoCol: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
@@ -493,10 +491,10 @@ const s = StyleSheet.create({
   rightPanel: { flex: 1.4, gap: 16 },
   fullPanel: { gap: 16 },
   intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
-  intrinsicLabel: { color: '#CBD5E1', fontSize: 11, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicLabel: { color: '#CBD5E1', fontSize: 17, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
   intrinsicValue: { fontSize: 52, fontWeight: '800', fontFamily: 'monospace', lineHeight: 60 },
   upsideBadge: { marginTop: 12, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-start' },
-  upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
+  upsideText: { fontSize: 22, fontWeight: '700', fontFamily: 'monospace' },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tvBar: { height: 16, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
   tvFill: { height: '100%' },
@@ -506,38 +504,38 @@ const s = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { color: '#CBD5E1', fontSize: 11 },
-  tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
-  th: { flex: 1, color: '#00FF80', fontSize: 11, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#1a0800', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
+  th: { flex: 1, color: '#FF8C00', fontSize: 17, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
   tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
-  td: { flex: 1, color: '#CBD5E1', fontSize: 12, fontFamily: 'monospace' },
+  td: { flex: 1, color: '#CBD5E1', fontSize: 22, fontFamily: 'monospace' },
   simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   simpleLabel: { color: '#CBD5E1', fontSize: 13 },
-  simpleVal: { color: '#CBD5E1', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
+  simpleVal: { color: '#CBD5E1', fontSize: 16, fontWeight: '600', fontFamily: 'monospace' },
 });
 
 const p = StyleSheet.create({
-  panel: { backgroundColor: '#050505', borderWidth: 1, borderColor: '#00FF8015', borderRadius: 12, padding: 16 },
+  panel: { backgroundColor: '#050505', borderWidth: 1, borderColor: '#FF8C0015', borderRadius: 12, padding: 16 },
   titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#00FF80', marginRight: 8 },
-  title: { color: '#00FF80', fontSize: 11, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FF8C00', marginRight: 8 },
+  title: { color: '#FF8C00', fontSize: 17, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
 });
 
 const k = StyleSheet.create({
-  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8022', borderRadius: 10, padding: 14 },
-  label: { color: '#CBD5E1', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 6 },
-  val: { color: '#FFFFFF', fontSize: 20, fontWeight: '800', fontFamily: 'monospace' },
+  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#FF8C0022', borderRadius: 10, padding: 14 },
+  label: { color: '#CBD5E1', fontSize: 16, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 6 },
+  val: { color: '#FFFFFF', fontSize: 22, fontWeight: '800', fontFamily: 'monospace' },
 });
 
 const tr = StyleSheet.create({
   row: { flexDirection: 'row' },
-  cell: { width: 90, paddingHorizontal: 8, paddingVertical: 8, color: '#CBD5E1', fontSize: 12, textAlign: 'right', fontFamily: 'monospace' },
+  cell: { width: 90, paddingHorizontal: 8, paddingVertical: 8, color: '#CBD5E1', fontSize: 22, textAlign: 'right', fontFamily: 'monospace' },
   label: { width: 200, textAlign: 'left', color: '#CBD5E1' },
-  sensCell: { width: 72, height: 40, paddingHorizontal: 4, paddingVertical: 6, fontSize: 12, textAlign: 'center', justifyContent: 'center', alignItems: 'center' },
+  sensCell: { width: 72, height: 40, paddingHorizontal: 4, paddingVertical: 6, fontSize: 22, textAlign: 'center', justifyContent: 'center', alignItems: 'center' },
 });
 
 const s2 = StyleSheet.create({
   card: { backgroundColor: '#050505', borderWidth: 1, borderRadius: 12, padding: 16, marginBottom: 16 },
   pill: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
-  pillText: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, fontFamily: 'monospace' },
-  price: { fontSize: 32, fontWeight: '800', fontFamily: 'monospace' },
+  pillText: { fontSize: 17, fontWeight: '800', letterSpacing: 1.5, fontFamily: 'monospace' },
+  price: { fontSize: 36, fontWeight: '800', fontFamily: 'monospace' },
 });

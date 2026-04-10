@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { dcfApi, newsApi } from '../../services/api';
 import { fmt$ } from '../../utils/dcfEngine';
-import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 export default function HomeScreen() {
   const [recent, setRecent]   = useState<any[]>([]);
@@ -40,16 +39,15 @@ export default function HomeScreen() {
 
   return (
     <View style={s.root}>
-      <AnimatedBackground />
       <ScrollView
         style={s.scroll}
         contentContainerStyle={s.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadAll(); }} tintColor="#00FF80" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadAll(); }} tintColor="#FF8C00" />}
       >
         {/* Header — logo taps back to home */}
         <View style={s.header}>
           <TouchableOpacity onPress={() => router.replace('/(tabs)/')} activeOpacity={0.7}>
-            <Text style={s.title}>DCF<Text style={{ color: '#00FF80' }}>.</Text>TERMINAL</Text>
+            <Text style={s.title}>DCF<Text style={{ color: '#FF8C00' }}>.</Text>TERMINAL</Text>
           </TouchableOpacity>
           <Text style={s.sub}>CFA-GRADE INTRINSIC VALUATION  ·  POWERED BY LIVE FINANCIAL DATA</Text>
         </View>
@@ -57,11 +55,11 @@ export default function HomeScreen() {
         {/* Tool cards */}
         <Text style={s.sectionLabel}>▸ TOOLS</Text>
         <View style={s.cardRow}>
-          <TouchableOpacity style={[s.card, { borderColor: '#00FF8033' }]} onPress={() => router.push('/(tabs)/panw')} activeOpacity={0.8}>
-            <View style={s.cardIcon}><Ionicons name="shield-checkmark-outline" size={24} color="#00FF80" /></View>
-            <Text style={[s.cardTitle, { color: '#00FF80' }]}>PANW MODEL</Text>
+          <TouchableOpacity style={[s.card, { borderColor: '#FF8C0033' }]} onPress={() => router.push('/(tabs)/panw')} activeOpacity={0.8}>
+            <View style={s.cardIcon}><Ionicons name="shield-checkmark-outline" size={24} color="#FF8C00" /></View>
+            <Text style={[s.cardTitle, { color: '#FF8C00' }]}>PANW MODEL</Text>
             <Text style={s.cardDesc}>Pre-built Palo Alto Networks DCF — interactive sliders, live recalculation, 6 analysis tabs</Text>
-            <View style={[s.chip, { borderColor: '#00FF8044' }]}><Text style={[s.chipText, { color: '#00FF80' }]}>LIVE DATA</Text></View>
+            <View style={[s.chip, { borderColor: '#FF8C0044' }]}><Text style={[s.chipText, { color: '#FF8C00' }]}>LIVE DATA</Text></View>
           </TouchableOpacity>
 
           <TouchableOpacity style={[s.card, { borderColor: '#0EA5E933' }]} onPress={() => router.push('/(tabs)/dcf')} activeOpacity={0.8}>
@@ -74,7 +72,7 @@ export default function HomeScreen() {
 
         {/* Live news */}
         <Text style={s.sectionLabel}>▸ MARKET NEWS</Text>
-        {loading && news.length === 0 && !newsError && <ActivityIndicator color="#00FF80" style={{ marginBottom: 20 }} />}
+        {loading && news.length === 0 && !newsError && <ActivityIndicator color="#FF8C00" style={{ marginBottom: 20 }} />}
         {newsError && <Text style={s.newsError}>Unable to load news — pull down to retry</Text>}
         {news.map((a, i) => (
           <TouchableOpacity key={a.id || i} style={s.newsCard} onPress={() => Linking.openURL(a.url)} activeOpacity={0.8}>
@@ -147,40 +145,40 @@ const s = StyleSheet.create({
   scroll: { flex: 1, zIndex: 1 },
   content: { padding: 20, paddingTop: 60, paddingBottom: 50 },
   header: { marginBottom: 32 },
-  title: { color: '#FFFFFF', fontSize: 32, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  sub: { color: '#6aaa8a', fontSize: 11, letterSpacing: 1.5, marginTop: 6, fontFamily: 'monospace' },
-  sectionLabel: { color: '#00FF80', fontSize: 11, fontWeight: '700', letterSpacing: 2, marginBottom: 12, fontFamily: 'monospace' },
+  title: { color: '#FFFFFF', fontSize: 36, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
+  sub: { color: '#aa7a3a', fontSize: 17, letterSpacing: 1.5, marginTop: 6, fontFamily: 'monospace' },
+  sectionLabel: { color: '#FF8C00', fontSize: 17, fontWeight: '700', letterSpacing: 2, marginBottom: 12, fontFamily: 'monospace' },
   cardRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
   card: { flex: 1, backgroundColor: '#050505', borderRadius: 14, padding: 18, borderWidth: 1 },
   cardIcon: { marginBottom: 12 },
-  cardTitle: { fontSize: 14, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 8 },
-  cardDesc: { color: '#CBD5E1', fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  cardTitle: { fontSize: 17, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 8 },
+  cardDesc: { color: '#CBD5E1', fontSize: 22, lineHeight: 18, marginBottom: 14 },
   chip: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' },
-  chipText: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  chipText: { fontSize: 16, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
   // News
-  newsCard: { backgroundColor: '#050505', borderRadius: 10, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#00FF8018' },
+  newsCard: { backgroundColor: '#050505', borderRadius: 10, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#FF8C0018' },
   newsTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  newsPublisher: { color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
-  newsTime: { color: '#6aaa8a', fontSize: 10, fontFamily: 'monospace' },
-  newsTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', lineHeight: 18, marginBottom: 4 },
-  newsDesc: { color: '#94A3B8', fontSize: 11, lineHeight: 16, marginBottom: 8 },
+  newsPublisher: { color: '#FF8C00', fontSize: 16, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
+  newsTime: { color: '#aa7a3a', fontSize: 16, fontFamily: 'monospace' },
+  newsTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', lineHeight: 18, marginBottom: 4 },
+  newsDesc: { color: '#94A3B8', fontSize: 17, lineHeight: 16, marginBottom: 8 },
   tickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tickerPill: { backgroundColor: '#001a00', borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 },
-  tickerPillText: { color: '#00FF80', fontSize: 10, fontWeight: '700', fontFamily: 'monospace' },
-  newsError: { color: '#64748B', fontSize: 12, fontFamily: 'monospace', marginBottom: 16, textAlign: 'center' },
+  tickerPill: { backgroundColor: '#1a0800', borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 },
+  tickerPillText: { color: '#FF8C00', fontSize: 16, fontWeight: '700', fontFamily: 'monospace' },
+  newsError: { color: '#64748B', fontSize: 22, fontFamily: 'monospace', marginBottom: 16, textAlign: 'center' },
   // Methodology
-  methodBox: { backgroundColor: '#050505', borderRadius: 12, padding: 16, marginBottom: 28, borderWidth: 1, borderColor: '#00FF8015' },
+  methodBox: { backgroundColor: '#050505', borderRadius: 12, padding: 16, marginBottom: 28, borderWidth: 1, borderColor: '#FF8C0015' },
   methodRow: { flexDirection: 'row', marginBottom: 14 },
-  methodDot: { color: '#00FF80', fontSize: 12 },
-  methodTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
-  methodDesc: { color: '#94A3B8', fontSize: 12, marginTop: 2 },
+  methodDot: { color: '#FF8C00', fontSize: 12 },
+  methodTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  methodDesc: { color: '#94A3B8', fontSize: 22, marginTop: 2 },
   // Recent
-  recentRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#050505', borderRadius: 10, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#00FF8015' },
-  recentTicker: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, marginRight: 12 },
-  recentTickerText: { color: '#00FF80', fontWeight: '700', fontSize: 13, fontFamily: 'monospace' },
-  recentName: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
-  recentDate: { color: '#94A3B8', fontSize: 11, marginTop: 2 },
-  recentPrice: { color: '#00FF80', fontWeight: '700', fontSize: 15, fontFamily: 'monospace' },
+  recentRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#050505', borderRadius: 10, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#FF8C0015' },
+  recentTicker: { backgroundColor: '#1a0800', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, marginRight: 12 },
+  recentTickerText: { color: '#FF8C00', fontWeight: '700', fontSize: 16, fontFamily: 'monospace' },
+  recentName: { color: '#CBD5E1', fontSize: 16, fontWeight: '600' },
+  recentDate: { color: '#94A3B8', fontSize: 17, marginTop: 2 },
+  recentPrice: { color: '#FF8C00', fontWeight: '700', fontSize: 22, fontFamily: 'monospace' },
   disclaimer: { backgroundColor: '#0a0500', borderRadius: 8, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#F59E0B22' },
-  disclaimerText: { color: '#D97706', fontSize: 11, lineHeight: 16 },
+  disclaimerText: { color: '#D97706', fontSize: 17, lineHeight: 16 },
 });

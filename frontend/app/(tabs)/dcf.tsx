@@ -128,7 +128,8 @@ export default function DCFToolScreen() {
       ]);
       if (snap.status === 'fulfilled') setSnapshot(snap.value);
       else throw new Error((snap as any).reason?.message);
-      if (cons.status === 'fulfilled') setConsensus(cons.value);
+      if (cons.status === 'fulfilled' && cons.value?.estimates?.length > 0) setConsensus(cons.value);
+      else setConsensus({ estimates: [], source: 'unavailable', error: cons.status === 'rejected' ? (cons as any).reason?.message : 'No estimates found' });
       setActiveTab('inputs');
     } catch (e: any) {
       setSnapshotError(e.message);
@@ -445,9 +446,21 @@ export default function DCFToolScreen() {
 
           {activeTab === 'consensus' && (
             <View>
-              {!consensus && (
+              {(!consensus || !consensus.estimates?.length) && (
                 <Panel title="WALL STREET CONSENSUS">
-                  <Text style={{ color: '#94A3B8', fontSize: 15 }}>No consensus data available for this ticker.</Text>
+                  <Text style={{ color: '#94A3B8', fontSize: 15, marginBottom: 8 }}>
+                    {!ticker
+                      ? 'Search for a ticker to load consensus estimates.'
+                      : 'No analyst estimates found for this ticker. Wall Street consensus data is available for large-cap stocks via FMP.'}
+                  </Text>
+                  {ticker && (
+                    <Text style={{ color: '#FF8C0088', fontSize: 13 }}>
+                      Try: AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA
+                    </Text>
+                  )}
+                  {consensus?.error && (
+                    <Text style={{ color: '#ef444488', fontSize: 12, marginTop: 8 }}>{consensus.error}</Text>
+                  )}
                 </Panel>
               )}
               {consensus?.estimates?.length > 0 && (

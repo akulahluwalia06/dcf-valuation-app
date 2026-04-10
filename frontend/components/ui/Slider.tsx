@@ -73,7 +73,7 @@ function injectSliderCSS() {
       color: #FF8C00;
       font-size: 22px;
       font-weight: 800;
-      font-family: monospace;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
       letter-spacing: 1px;
       text-align: right;
       outline: none;
@@ -165,9 +165,9 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
 const s = StyleSheet.create({
   row: { marginBottom: 22 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { color: '#94A3B8', fontSize: 16, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
+  label: { color: '#94A3B8', fontSize: 16, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif', flex: 1 },
   valueBtn: {},
-  value: { color: '#FF8C00', fontSize: 22, fontWeight: '800', fontFamily: 'monospace', letterSpacing: 1 },
+  value: { color: '#FF8C00', fontSize: 22, fontWeight: '800', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif', letterSpacing: 1 },
   rangeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
-  rangeText: { color: '#aa7a3a', fontSize: 22, fontFamily: 'monospace' },
+  rangeText: { color: '#aa7a3a', fontSize: 22, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
 });

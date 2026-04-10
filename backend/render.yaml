@@ -18,6 +18,8 @@ services:
           property: connectionString
       - key: POLYGON_API_KEY
         sync: false
+      - key: FMP_API_KEY
+        sync: false
       - key: CLIENT_ORIGIN
         sync: false
     healthCheckPath: /health

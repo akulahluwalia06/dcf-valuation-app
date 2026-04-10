@@ -1,33 +1,106 @@
 /**
  * Unified financial data service
  *
- * Routing logic:
- *  - Canadian tickers (suffix .TO, .V, .TSX, .CN, .NEO) → Yahoo Finance
- *  - US tickers → Polygon.io
- *  - Fallback: if Polygon returns no price/revenue, retry via Yahoo Finance
+ * Routing:
+ *  US tickers              → Polygon.io (price + financials)
+ *  Canadian tickers (.TO etc) → FMP using the base symbol (most dual-list in US)
+ *  Fallback                → FMP for any US ticker Polygon can't fill
  */
 
 const axios = require('axios');
 
-// ── helpers ──────────────────────────────────────────────────────────────────
-function n(v) {
-  if (v == null) return 0;
-  if (typeof v === 'object' && 'raw' in v) return Number(v.raw) || 0;
-  return Number(v) || 0;
-}
-
-// Detect non-US tickers that Polygon doesn't cover on the free tier
-const CANADIAN_RE = /\.(TO|V|TSX|CN|NEO|VN)$/i;
-function isNonUS(ticker) {
-  return CANADIAN_RE.test(ticker) || ticker.includes(':');
-}
-
-// ── Polygon (US) ─────────────────────────────────────────────────────────────
 const POLY_BASE = 'https://api.polygon.io';
+const FMP_BASE  = 'https://financialmodelingprep.com/stable';
+const FMP_KEY   = process.env.FMP_API_KEY   || process.env.POLYGON_API_KEY; // reuse env slot
+const POLY_KEY  = process.env.POLYGON_API_KEY;
 
+// Canadian / non-US exchange suffixes
+const NON_US_RE = /\.(TO|V|TSX|CN|NEO|VN|L|AX|PA|DE|HK|T|KS|SS|SZ|SA|MX|NZ|JO|IR|LS|ST|HE|CO|OL|AS|BR|SG)$/i;
+
+function isNonUS(ticker) { return NON_US_RE.test(ticker); }
+
+// Strip exchange suffix to get the base symbol (SHOP.TO → SHOP)
+function baseSymbol(ticker) { return ticker.replace(NON_US_RE, ''); }
+
+function n(v) { return (typeof v === 'number' ? v : 0); }
+
+// ── FMP helpers ──────────────────────────────────────────────
+async function fmpGet(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  const { data } = await axios.get(`${FMP_BASE}${path}${sep}apikey=${FMP_KEY}`, { timeout: 15000 });
+  if (typeof data === 'string' && data.includes('limit')) throw new Error('FMP_RATE_LIMIT');
+  if (typeof data === 'string' && data.includes('Premium')) throw new Error('FMP_PREMIUM_REQUIRED');
+  return data;
+}
+
+async function snapshotFromFMP(symbol, originalTicker) {
+  const [profiles, incomes, cashflows, balances] = await Promise.all([
+    fmpGet(`/profile?symbol=${symbol}`),
+    fmpGet(`/income-statement?symbol=${symbol}&limit=4`),
+    fmpGet(`/cash-flow-statement?symbol=${symbol}&limit=4`),
+    fmpGet(`/balance-sheet-statement?symbol=${symbol}&limit=1`),
+  ]);
+
+  const profile  = (Array.isArray(profiles)  ? profiles[0]  : profiles)  || {};
+  const income   = (Array.isArray(incomes)   ? incomes      : []);
+  const cashflow = (Array.isArray(cashflows) ? cashflows    : []);
+  const balance  = (Array.isArray(balances)  ? balances[0]  : balances)  || {};
+
+  const latest   = income[0]   || {};
+  const latestCF = cashflow[0] || {};
+
+  const currentPrice      = n(profile.price);
+  const marketCap         = n(profile.marketCap);
+  const sharesOutstanding = marketCap && currentPrice ? marketCap / currentPrice : n(profile.sharesOutstanding) || 1;
+
+  const revenue     = n(latest.revenue);
+  const grossProfit = n(latest.grossProfit);
+  const ebit        = n(latest.operatingIncome) || n(latest.ebit);
+  const da          = n(latestCF.depreciationAndAmortization);
+  const capex       = Math.abs(n(latestCF.capitalExpenditure) || n(latestCF.investmentsInPropertyPlantAndEquipment));
+  const fcf         = n(latestCF.freeCashFlow);
+  const cash        = n(balance.cashAndCashEquivalents) || n(balance.cashAndShortTermInvestments);
+  const totalDebt   = n(balance.totalDebt) || n(balance.shortTermDebt) + n(balance.longTermDebt);
+
+  const historicalRevenues = income.slice(0, 4).map(y => ({
+    period:      y.fiscalYear || y.date?.substring(0, 4) || '',
+    revenue:     n(y.revenue),
+    grossProfit: n(y.grossProfit),
+    ebit:        n(y.operatingIncome) || n(y.ebit),
+    netIncome:   n(y.netIncome),
+  })).reverse();
+
+  return {
+    ticker:            originalTicker,
+    companyName:       profile.companyName || originalTicker,
+    currentPrice,
+    marketCap,
+    exchange:          profile.exchange || profile.exchangeFullName || '',
+    sector:            profile.sector   || '',
+    industry:          profile.industry || '',
+    description:       (profile.description || '').slice(0, 500),
+    latestFiscalYear:  latest.fiscalYear || latest.date?.substring(0, 4) || '',
+    historicalRevenues,
+    snapshot: {
+      revenue, grossProfit,
+      grossMargin:  revenue ? grossProfit / revenue : 0,
+      ebit,
+      ebitMargin:   revenue ? ebit / revenue : 0,
+      da,
+      daPercent:    revenue ? da / revenue : 0,
+      capex,
+      capexPercent: revenue ? capex / revenue : 0,
+      fcf,
+      fcfMargin:    revenue ? fcf / revenue : 0,
+      cash, totalDebt, sharesOutstanding,
+    },
+  };
+}
+
+// ── Polygon helpers ──────────────────────────────────────────
 async function polyGet(path) {
   const sep = path.includes('?') ? '&' : '?';
-  const { data } = await axios.get(`${POLY_BASE}${path}${sep}apiKey=${process.env.POLYGON_API_KEY}`, { timeout: 15000 });
+  const { data } = await axios.get(`${POLY_BASE}${path}${sep}apiKey=${POLY_KEY}`, { timeout: 15000 });
   if (data.status === 'ERROR') throw new Error(data.error || 'Polygon error');
   return data;
 }
@@ -43,16 +116,16 @@ async function snapshotFromPolygon(ticker) {
   const prevClose = (priceData.results    || [])[0] || {};
   const fins      = financialsData.results || [];
 
-  const currentPrice       = n(prevClose.c);
-  const marketCap          = n(details.market_cap);
-  const sharesOutstanding  = n(details.weighted_shares_outstanding) || (marketCap && currentPrice ? marketCap / currentPrice : 1);
+  const currentPrice      = n(prevClose.c);
+  const marketCap         = n(details.market_cap);
+  const sharesOutstanding = n(details.weighted_shares_outstanding) || (marketCap && currentPrice ? marketCap / currentPrice : 1);
 
   const latestFin = fins[0] || {};
   const ic = latestFin.financials?.income_statement    || {};
   const bs = latestFin.financials?.balance_sheet       || {};
   const cf = latestFin.financials?.cash_flow_statement || {};
 
-  const revenue     = n(ic.revenues?.value)      || n(ic.net_revenues?.value);
+  const revenue     = n(ic.revenues?.value) || n(ic.net_revenues?.value);
   const grossProfit = n(ic.gross_profit?.value);
   const ebit        = n(ic.operating_income_loss?.value);
   const da          = n(cf.depreciation_depletion_and_amortization?.value);
@@ -100,81 +173,22 @@ async function snapshotFromPolygon(ticker) {
   };
 }
 
-// ── Yahoo Finance (international / Canadian fallback) ─────────────────────────
-// yahoo-finance2 v2 — handles crumb/cookie automatically
-const yf = require('yahoo-finance2').default;
-yf.suppressNotices(['yahooSurvey']);
-
-async function snapshotFromYahoo(ticker) {
-  const summary = await yf.quoteSummary(ticker, {
-    modules: ['price', 'defaultKeyStatistics', 'financialData', 'assetProfile'],
-  });
-
-  const price   = summary.price    || {};
-  const stats   = summary.defaultKeyStatistics || {};
-  const finData = summary.financialData || {};
-  const profile = summary.assetProfile  || {};
-
-  const currentPrice      = n(price.regularMarketPrice);
-  const marketCap         = n(price.marketCap) || n(stats.marketCap);
-  const sharesOutstanding = n(stats.sharesOutstanding) || (marketCap && currentPrice ? marketCap / currentPrice : 1);
-
-  const revenue     = n(finData.totalRevenue);
-  const grossProfit = n(finData.grossProfits);
-  const ebitda      = n(finData.ebitda);
-  const ebitM       = n(finData.operatingMargins);
-  const ebit        = revenue * ebitM;
-  const da          = ebitda > ebit ? ebitda - ebit : 0;
-  const fcf         = n(finData.freeCashflow);
-  const operatingCF = n(finData.operatingCashflow);
-  const capex       = operatingCF > fcf && fcf > 0 ? operatingCF - fcf : 0;
-  const cash        = n(finData.totalCash);
-  const totalDebt   = n(finData.totalDebt);
-  const grossM      = n(finData.grossMargins);
-
-  return {
-    ticker,
-    companyName:      price.longName || price.shortName || ticker,
-    currentPrice,
-    marketCap,
-    exchange:         price.exchangeName || price.fullExchangeName || '',
-    sector:           profile.sector   || '',
-    industry:         profile.industry || '',
-    description:      (profile.longBusinessSummary || '').slice(0, 500),
-    latestFiscalYear: String(new Date().getFullYear() - 1),
-    historicalRevenues: [],
-    snapshot: {
-      revenue,
-      grossProfit:  grossProfit || revenue * grossM,
-      grossMargin:  grossM,
-      ebit,
-      ebitMargin:   ebitM,
-      da,
-      daPercent:    revenue ? da / revenue : 0,
-      capex,
-      capexPercent: revenue ? capex / revenue : 0,
-      fcf,
-      fcfMargin:    revenue ? fcf / revenue : 0,
-      cash, totalDebt, sharesOutstanding,
-    },
-  };
-}
-
-// ── Public API ───────────────────────────────────────────────────────────────
+// ── Public API ───────────────────────────────────────────────
 async function getFinancialSnapshot(rawTicker) {
   const ticker = rawTicker.toUpperCase();
 
-  // Always fetch live — no caching so price and financials are always current
   if (isNonUS(ticker)) {
-    return snapshotFromYahoo(ticker);
+    // Use base symbol to find US-listed financials via FMP
+    const base = baseSymbol(ticker);
+    return snapshotFromFMP(base, ticker);
   }
 
-  // Try Polygon first for US tickers
+  // Try Polygon for US tickers
   const snap = await snapshotFromPolygon(ticker);
 
-  // If Polygon returned no useful data, fall back to Yahoo
+  // If Polygon has no data fall back to FMP
   if (!snap.currentPrice && !snap.snapshot.revenue) {
-    return snapshotFromYahoo(ticker);
+    return snapshotFromFMP(ticker, ticker);
   }
 
   return snap;
@@ -182,12 +196,15 @@ async function getFinancialSnapshot(rawTicker) {
 
 async function getQuote(rawTicker) {
   const ticker = rawTicker.toUpperCase();
+  const symbol = isNonUS(ticker) ? baseSymbol(ticker) : ticker;
+
   if (isNonUS(ticker)) {
-    const q = await yf.quote(ticker);
-    return q || {};
+    const data = await fmpGet(`/quote?symbol=${symbol}`);
+    return Array.isArray(data) ? data[0] : data || {};
   }
+
   const { data } = await axios.get(
-    `${POLY_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${process.env.POLYGON_API_KEY}`,
+    `${POLY_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${POLY_KEY}`,
     { timeout: 10000 }
   );
   return (data.results || [])[0] || {};

@@ -44,3 +44,8 @@ export const dcfApi = {
   getRecent: () =>
     api.get('/api/dcf/recent').then(r => r.data),
 };
+
+export const newsApi = {
+  getNews: (): Promise<any[]> =>
+    api.get('/api/news').then(r => r.data),
+};

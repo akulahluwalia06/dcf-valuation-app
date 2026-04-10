@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
   ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useDCFStore } from '../../store/useDCFStore';
 import { financialApi } from '../../services/api';
 import { calculateDCF, calculateSensitivityGrid, fmt$, fmtPct, fmtM, getSensitivityBg, getSensitivityColor } from '../../utils/dcfEngine';
@@ -146,7 +147,9 @@ export default function DCFToolScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.headerTitle}>DCF<Text style={{ color: '#00FF80' }}>.</Text>TOOL</Text>
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/')} activeOpacity={0.7}>
+          <Text style={s.headerTitle}>DCF<Text style={{ color: '#00FF80' }}>.</Text>TOOL</Text>
+        </TouchableOpacity>
         <Text style={s.headerSub}>SEARCH ANY TICKER  ·  AUTO-POPULATE FROM LIVE FINANCIALS  ·  INSTANT RECALCULATION</Text>
       </View>
 

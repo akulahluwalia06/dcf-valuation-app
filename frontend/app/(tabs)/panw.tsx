@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity, ActivityIndicator,
   StyleSheet, Dimensions, Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useDCFStore } from '../../store/useDCFStore';
 import { panwApi } from '../../services/api';
 import { calculateDCF, fmt$, fmtPct, fmtM, calculateSensitivityGrid, getSensitivityBg, getSensitivityColor } from '../../utils/dcfEngine';
@@ -112,10 +113,10 @@ export default function PANWScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <View style={s.headerLeft}>
+        <TouchableOpacity style={s.headerLeft} onPress={() => router.replace('/(tabs)/')} activeOpacity={0.7}>
           <Text style={s.ticker}>PANW</Text>
           <Text style={s.company}> PALO ALTO NETWORKS</Text>
-        </View>
+        </TouchableOpacity>
         <View style={s.headerRight}>
           <Text style={s.headerLabel}>DCF / FCF VALUATION MODEL</Text>
           <Text style={s.headerDate}>FEB 17, 2026  ·  EARNINGS DAY</Text>

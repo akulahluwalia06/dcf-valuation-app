@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const financialRoutes = require('./routes/financial');
 const dcfRoutes = require('./routes/dcf');
 const panwRoutes = require('./routes/panw');
+const newsRoutes = require('./routes/news');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -37,6 +38,7 @@ app.use('/api/', limiter);
 app.use('/api/financial', financialRoutes);
 app.use('/api/dcf', dcfRoutes);
 app.use('/api/panw', panwRoutes);
+app.use('/api/news', newsRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: new Date() }));
 

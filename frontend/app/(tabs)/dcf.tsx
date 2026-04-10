@@ -49,12 +49,26 @@ export default function DCFToolScreen() {
     const debt0 = s.totalDebt / 1e6;
     const sh0   = s.sharesOutstanding / 1e6;
     setBaseRev(rev);
-    setEbitM(Math.max(s.ebitMargin, 0.05));
+    // Use actual EBIT margin; only floor at 10% if truly missing/negative
+    setEbitM(s.ebitMargin > 0 ? s.ebitMargin : 0.10);
     setCash(cash0);
     setDebt(debt0);
     setShares(sh0);
-    setPhase1Growth(0.12);
-    setPhase2Growth(0.08);
+
+    // Derive historical growth from available years (CAGR oldest→newest)
+    const hist = snap.historicalRevenues?.filter(h => h.revenue > 0) || [];
+    let historicalGrowth = 0.12;
+    if (hist.length >= 2) {
+      const oldest = hist[0].revenue;
+      const newest = hist[hist.length - 1].revenue;
+      const years  = hist.length - 1;
+      historicalGrowth = Math.pow(newest / oldest, 1 / years) - 1;
+      // Clamp to reasonable range
+      historicalGrowth = Math.min(Math.max(historicalGrowth, 0.02), 0.60);
+    }
+    // Phase 1 anchored to historical CAGR, phase 2 = roughly half that
+    setPhase1Growth(parseFloat(historicalGrowth.toFixed(4)));
+    setPhase2Growth(parseFloat(Math.max(historicalGrowth * 0.5, 0.04).toFixed(4)));
     setTgr(0.03);
     setWacc(0.10);
     setExitMult(20);
@@ -94,7 +108,7 @@ export default function DCFToolScreen() {
     grossMargin: snapshot?.snapshot.grossMargin || 0.60,
     daPercent: snapshot?.snapshot.daPercent || 0.04,
     capexPercent: snapshot?.snapshot.capexPercent || 0.03,
-    nwcPercent: -0.05,
+    nwcPercent: 0,
     wacc,
     terminalGrowthRate: tgr,
     exitMultiple: exitMult,

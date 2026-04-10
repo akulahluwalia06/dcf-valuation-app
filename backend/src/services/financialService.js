@@ -186,9 +186,16 @@ async function getFinancialSnapshot(rawTicker) {
   // Try Polygon for US tickers
   const snap = await snapshotFromPolygon(ticker);
 
-  // If Polygon has no data fall back to FMP
-  if (!snap.currentPrice && !snap.snapshot.revenue) {
-    return snapshotFromFMP(ticker, ticker);
+  // Polygon free tier often returns price but NO financials (vX endpoint is paid).
+  // Fall back to FMP whenever revenue is missing — we need financials for DCF.
+  if (!snap.snapshot.revenue) {
+    const fmpSnap = await snapshotFromFMP(ticker, ticker);
+    // Prefer Polygon's live price if FMP doesn't have one
+    if (!fmpSnap.currentPrice && snap.currentPrice) {
+      fmpSnap.currentPrice = snap.currentPrice;
+      fmpSnap.marketCap    = snap.marketCap;
+    }
+    return fmpSnap;
   }
 
   return snap;

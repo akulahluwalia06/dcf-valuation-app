@@ -41,10 +41,8 @@ export default function DCFToolScreen() {
   const [debtRange, setDebtRange]     = useState({ min: 0, max: 1000, step: 10 });
   const [sharesRange, setSharesRange] = useState({ min: 1, max: 100, step: 1 });
 
-  // Sync sliders when snapshot loads
-  useEffect(() => {
-    if (!snapshot) return;
-    const s = snapshot.snapshot;
+  function applySnapshot(snap: FinancialSnapshot) {
+    const s = snap.snapshot;
     const rev   = s.revenue / 1e6;
     const cash0 = s.cash / 1e6;
     const debt0 = s.totalDebt / 1e6;
@@ -54,12 +52,38 @@ export default function DCFToolScreen() {
     setCash(cash0);
     setDebt(debt0);
     setShares(sh0);
-    // Fix ranges based on snapshot values
+    setPhase1Growth(0.12);
+    setPhase2Growth(0.08);
+    setTgr(0.03);
+    setWacc(0.10);
+    setExitMult(20);
     setRevRange({   min: Math.max(rev * 0.3, 1), max: Math.max(rev * 3, 100), step: Math.max(rev * 0.01, 1) });
     setCashRange({  min: 0, max: Math.max(cash0 * 3, rev * 0.5, 1000), step: Math.max(rev * 0.005, 10) });
     setDebtRange({  min: 0, max: Math.max(debt0 * 3, rev * 0.5, 1000), step: Math.max(rev * 0.005, 10) });
     setSharesRange({ min: Math.max(sh0 * 0.5, 1), max: Math.max(sh0 * 2, 100), step: Math.max(sh0 * 0.01, 1) });
+  }
+
+  // Sync sliders when snapshot loads
+  useEffect(() => {
+    if (!snapshot) return;
+    applySnapshot(snapshot);
   }, [snapshot]);
+
+  const [resetting, setResetting] = useState(false);
+  async function handleReset() {
+    if (!ticker) return;
+    setResetting(true);
+    try {
+      // Clear cache by forcing a fresh fetch — bust MongoDB TTL via reload
+      const snap: FinancialSnapshot = await financialApi.getSnapshot(ticker);
+      setSnapshot(snap);
+      applySnapshot(snap);
+    } catch (e: any) {
+      setSnapshotError(e.message);
+    } finally {
+      setResetting(false);
+    }
+  }
 
   const assumptions: DCFAssumptions = useMemo(() => ({
     baseRevenue: baseRev,
@@ -188,6 +212,12 @@ export default function DCFToolScreen() {
               </Text>
             </View>
           )}
+          <TouchableOpacity style={s.resetBtn} onPress={handleReset} disabled={resetting}>
+            {resetting
+              ? <ActivityIndicator size="small" color="#00FF80" />
+              : <Text style={s.resetBtnText}>↺ RESET</Text>
+            }
+          </TouchableOpacity>
         </View>
       )}
 
@@ -448,6 +478,8 @@ const s = StyleSheet.create({
   companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#050505', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, gap: 12 },
   companyTickerBox: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#00FF8033' },
   companyTicker: { color: '#00FF80', fontWeight: '800', fontSize: 14, fontFamily: 'monospace' },
+  resetBtn: { marginLeft: 8, borderWidth: 1, borderColor: '#00FF8044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  resetBtnText: { color: '#00FF80', fontSize: 11, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
   companyName: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
   companySub: { color: '#CBD5E1', fontSize: 11, marginTop: 2 },
   priceLabel: { color: '#CBD5E1', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },

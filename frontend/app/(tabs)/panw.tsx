@@ -64,6 +64,17 @@ export default function PANWScreen() {
 
   const result = useMemo(() => calculateDCF(liveAssumptions), [liveAssumptions]);
 
+  function resetToBase() {
+    setPhase1Growth(0.16);
+    setPhase2Growth(0.10);
+    setTgr(0.035);
+    setWacc(0.095);
+    setEbitM(0.28);
+    setExitMult(30);
+    setCash(3100);
+    setShares(697);
+  }
+
   async function load() {
     setPanwLoading(true);
     setPanwError(null);
@@ -108,6 +119,9 @@ export default function PANWScreen() {
         <View style={s.headerRight}>
           <Text style={s.headerLabel}>DCF / FCF VALUATION MODEL</Text>
           <Text style={s.headerDate}>FEB 17, 2026  ·  EARNINGS DAY</Text>
+          <TouchableOpacity style={s.resetBtn} onPress={resetToBase}>
+            <Text style={s.resetBtnText}>↺ RESET</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -460,7 +474,9 @@ const s = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'baseline' },
   ticker: { color: '#00FF80', fontSize: 28, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
   company: { color: '#CBD5E1', fontSize: 13, letterSpacing: 2, fontFamily: 'monospace' },
-  headerRight: { alignItems: 'flex-end' },
+  headerRight: { alignItems: 'flex-end', gap: 4 },
+  resetBtn: { borderWidth: 1, borderColor: '#00FF8044', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginTop: 4 },
+  resetBtnText: { color: '#00FF80', fontSize: 11, fontWeight: '700', fontFamily: 'monospace', letterSpacing: 1 },
   headerLabel: { color: '#CBD5E1', fontSize: 12, letterSpacing: 1.5, fontFamily: 'monospace' },
   headerDate: { color: '#6aaa8a', fontSize: 10, letterSpacing: 1, fontFamily: 'monospace', marginTop: 2 },
   tabBar: { flexDirection: 'row', backgroundColor: '#000000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, paddingHorizontal: 8 },

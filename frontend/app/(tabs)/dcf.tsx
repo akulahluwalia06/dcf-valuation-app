@@ -35,15 +35,30 @@ export default function DCFToolScreen() {
   const [shares, setShares] = useState(1);
   const [baseRev, setBaseRev] = useState(0);
 
+  // Fixed ranges — set once when snapshot loads, never change while sliding
+  const [revRange, setRevRange]       = useState({ min: 1, max: 1000, step: 10 });
+  const [cashRange, setCashRange]     = useState({ min: 0, max: 1000, step: 10 });
+  const [debtRange, setDebtRange]     = useState({ min: 0, max: 1000, step: 10 });
+  const [sharesRange, setSharesRange] = useState({ min: 1, max: 100, step: 1 });
+
   // Sync sliders when snapshot loads
   useEffect(() => {
     if (!snapshot) return;
     const s = snapshot.snapshot;
-    setBaseRev(s.revenue / 1e6);
+    const rev   = s.revenue / 1e6;
+    const cash0 = s.cash / 1e6;
+    const debt0 = s.totalDebt / 1e6;
+    const sh0   = s.sharesOutstanding / 1e6;
+    setBaseRev(rev);
     setEbitM(Math.max(s.ebitMargin, 0.05));
-    setCash(s.cash / 1e6);
-    setDebt(s.totalDebt / 1e6);
-    setShares(s.sharesOutstanding / 1e6);
+    setCash(cash0);
+    setDebt(debt0);
+    setShares(sh0);
+    // Fix ranges based on snapshot values
+    setRevRange({   min: Math.max(rev * 0.3, 1), max: Math.max(rev * 3, 100), step: Math.max(rev * 0.01, 1) });
+    setCashRange({  min: 0, max: Math.max(cash0 * 3, rev * 0.5, 1000), step: Math.max(rev * 0.005, 10) });
+    setDebtRange({  min: 0, max: Math.max(debt0 * 3, rev * 0.5, 1000), step: Math.max(rev * 0.005, 10) });
+    setSharesRange({ min: Math.max(sh0 * 0.5, 1), max: Math.max(sh0 * 2, 100), step: Math.max(sh0 * 0.01, 1) });
   }, [snapshot]);
 
   const assumptions: DCFAssumptions = useMemo(() => ({
@@ -213,16 +228,16 @@ export default function DCFToolScreen() {
               <View style={isWide ? s.leftPanel : {}}>
                 <Panel title="BASE METRICS">
                   <Slider label={`BASE REVENUE ($M)  —  FY${snapshot.latestFiscalYear}`}
-                    value={baseRev} min={Math.max(baseRev * 0.3, 1)} max={Math.max(baseRev * 3, 100)} step={Math.max(baseRev * 0.01, 1)}
-                    onChange={setBaseRev} formatValue={v => `$${(v).toFixed(0)}M`} />
+                    value={baseRev} min={revRange.min} max={revRange.max} step={revRange.step}
+                    onChange={setBaseRev} formatValue={v => `$${v.toFixed(0)}M`} />
                   <Slider label="CASH & EQUIVALENTS ($M)"
-                    value={cash} min={0} max={Math.max(cash * 3, baseRev * 0.5, 1000)} step={Math.max(baseRev * 0.005, 10)}
+                    value={cash} min={cashRange.min} max={cashRange.max} step={cashRange.step}
                     onChange={setCash} formatValue={v => `$${v.toFixed(0)}M`} />
                   <Slider label="TOTAL DEBT ($M)"
-                    value={debt} min={0} max={Math.max(debt * 3, baseRev * 0.5, 1000)} step={Math.max(baseRev * 0.005, 10)}
+                    value={debt} min={debtRange.min} max={debtRange.max} step={debtRange.step}
                     onChange={setDebt} formatValue={v => `$${v.toFixed(0)}M`} />
                   <Slider label="DILUTED SHARES (M)"
-                    value={shares} min={Math.max(shares * 0.5, 1)} max={Math.max(shares * 2, 100)} step={Math.max(shares * 0.01, 1)}
+                    value={shares} min={sharesRange.min} max={sharesRange.max} step={sharesRange.step}
                     onChange={setShares} formatValue={v => `${v.toFixed(0)}M`} />
                 </Panel>
 

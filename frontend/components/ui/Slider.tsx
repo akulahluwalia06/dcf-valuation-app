@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface SliderProps {
@@ -11,11 +11,74 @@ interface SliderProps {
   label: string;
 }
 
+// Inject global slider CSS once
+let cssInjected = false;
+function injectSliderCSS() {
+  if (cssInjected || typeof document === 'undefined') return;
+  cssInjected = true;
+  const style = document.createElement('style');
+  style.textContent = `
+    .dcf-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      outline: none;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .dcf-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #00FF80;
+      cursor: pointer;
+      border: 2px solid #000;
+      box-shadow: 0 0 6px #00FF8066;
+    }
+    .dcf-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #00FF80;
+      cursor: pointer;
+      border: 2px solid #000;
+      box-shadow: 0 0 6px #00FF8066;
+    }
+    .dcf-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 4px;
+    }
+    .dcf-slider::-moz-range-track {
+      height: 6px;
+      border-radius: 4px;
+      background: #1a2a1a;
+    }
+    .dcf-slider::-moz-range-progress {
+      height: 6px;
+      border-radius: 4px;
+      background: #00FF80;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 export default function Slider({ value, min, max, step = 0.001, onChange, formatValue, label }: SliderProps) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    injectSliderCSS();
+    setMounted(true);
+  }, []);
 
   const display = formatValue ? formatValue(value) : value.toFixed(3);
+  const pct = max > min ? ((value - min) / (max - min)) * 100 : 0;
+  const trackBg = `linear-gradient(to right, #00FF80 0%, #00FF80 ${pct}%, #1a2a1a ${pct}%, #1a2a1a 100%)`;
 
   return (
     <View style={s.row}>
@@ -27,24 +90,13 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
         <>
           <input
             type="range"
+            className="dcf-slider"
             min={min}
             max={max}
             step={step}
             value={value}
             onChange={e => onChange(parseFloat(e.target.value))}
-            style={{
-              width: '100%',
-              accentColor: '#00FF80',
-              cursor: 'pointer',
-              marginTop: 8,
-              marginBottom: 4,
-              height: 4,
-              background: `linear-gradient(to right, #00FF80 0%, #00FF80 ${((value - min) / (max - min)) * 100}%, #1a2a1a ${((value - min) / (max - min)) * 100}%, #1a2a1a 100%)`,
-              borderRadius: 4,
-              outline: 'none',
-              border: 'none',
-              WebkitAppearance: 'none',
-            } as any}
+            style={{ background: trackBg } as any}
           />
           <View style={s.rangeLabels}>
             <Text style={s.rangeText}>{formatValue ? formatValue(min) : min}</Text>

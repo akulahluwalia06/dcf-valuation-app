@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
-  presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
@@ -15,10 +14,6 @@ module.exports = {
         link:    '#0B8043',
         pos:     '#137333',
         neg:     '#C0392B',
-      },
-      fontFamily: {
-        sans: ['Inter', 'Arial', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
       },
     },
   },

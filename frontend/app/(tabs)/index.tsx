@@ -12,6 +12,7 @@ import AnimatedBackground from '../../components/ui/AnimatedBackground';
 export default function HomeScreen() {
   const [recent, setRecent]   = useState<any[]>([]);
   const [news, setNews]       = useState<any[]>([]);
+  const [newsError, setNewsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -19,7 +20,8 @@ export default function HomeScreen() {
     try {
       const [r, n] = await Promise.allSettled([dcfApi.getRecent(), newsApi.getNews()]);
       if (r.status === 'fulfilled') setRecent(r.value);
-      if (n.status === 'fulfilled') setNews(n.value);
+      if (n.status === 'fulfilled') { setNews(n.value); setNewsError(false); }
+      else setNewsError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -72,7 +74,8 @@ export default function HomeScreen() {
 
         {/* Live news */}
         <Text style={s.sectionLabel}>▸ MARKET NEWS</Text>
-        {loading && news.length === 0 && <ActivityIndicator color="#00FF80" style={{ marginBottom: 20 }} />}
+        {loading && news.length === 0 && !newsError && <ActivityIndicator color="#00FF80" style={{ marginBottom: 20 }} />}
+        {newsError && <Text style={s.newsError}>Unable to load news — pull down to retry</Text>}
         {news.map((a, i) => (
           <TouchableOpacity key={a.id || i} style={s.newsCard} onPress={() => Linking.openURL(a.url)} activeOpacity={0.8}>
             <View style={s.newsTop}>
@@ -164,6 +167,7 @@ const s = StyleSheet.create({
   tickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tickerPill: { backgroundColor: '#001a00', borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2 },
   tickerPillText: { color: '#00FF80', fontSize: 10, fontWeight: '700', fontFamily: 'monospace' },
+  newsError: { color: '#64748B', fontSize: 12, fontFamily: 'monospace', marginBottom: 16, textAlign: 'center' },
   // Methodology
   methodBox: { backgroundColor: '#050505', borderRadius: 12, padding: 16, marginBottom: 28, borderWidth: 1, borderColor: '#00FF8015' },
   methodRow: { flexDirection: 'row', marginBottom: 14 },

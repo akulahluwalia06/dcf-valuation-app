@@ -1,55 +1,57 @@
-import React, { useEffect, useRef } from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 
-// Web-only animated canvas background — finance ticker/grid aesthetic
 export default function AnimatedBackground() {
   const canvasRef = useRef<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     let animId: number;
 
     const resize = () => {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvas.width  = canvas.offsetWidth  || window.innerWidth;
+      canvas.height = canvas.offsetHeight || window.innerHeight;
     };
     resize();
     window.addEventListener('resize', resize);
 
-    // Matrix-style falling numbers + grid
-    const cols = Math.floor(canvas.width / 20);
+    const cols = Math.floor((canvas.width || 800) / 20);
     const drops: number[] = Array(cols).fill(0).map(() => Math.random() * -50);
-    const chars = '01アイウエオカキクケコ$%#@+=-ABCDEFGHIJKLMNOP';
+    const chars = '01アイウエオカキクケコ$%#@+=-ABCDEFGHIJKLMNOP0123456789';
 
     function draw() {
       ctx.fillStyle = 'rgba(0,0,0,0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.font = '11px monospace';
 
       drops.forEach((y, i) => {
         const char = chars[Math.floor(Math.random() * chars.length)];
-        const alpha = Math.random() * 0.4 + 0.05;
-
-        // Alternate green shades
+        const alpha = Math.random() * 0.35 + 0.05;
         ctx.fillStyle = i % 3 === 0
           ? `rgba(0,255,80,${alpha})`
           : i % 3 === 1
           ? `rgba(0,200,60,${alpha * 0.5})`
-          : `rgba(0,255,128,${alpha * 0.3})`;
-
+          : `rgba(0,255,128,${alpha * 0.25})`;
         ctx.fillText(char, i * 20, y * 20);
-
         if (y * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i] += 0.5;
       });
 
-      // Draw subtle grid lines
-      ctx.strokeStyle = 'rgba(0,255,80,0.03)';
+      // subtle grid
+      ctx.strokeStyle = 'rgba(0,255,80,0.025)';
       ctx.lineWidth = 1;
       for (let x = 0; x < canvas.width; x += 60) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -66,19 +68,18 @@ export default function AnimatedBackground() {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [mounted]);
 
-  if (Platform.OS !== 'web') {
+  if (!mounted) {
     return <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000000' }]} />;
   }
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-        zIndex: 0, opacity: 0.6,
-      }}
-    />
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <canvas
+        ref={canvasRef}
+        style={{ width: '100%', height: '100%', display: 'block', opacity: 0.55 }}
+      />
+    </View>
   );
 }

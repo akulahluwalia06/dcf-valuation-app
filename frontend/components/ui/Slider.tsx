@@ -59,8 +59,8 @@ export default function Slider({ value, min, max, step = 0.001, onChange, format
 const s = StyleSheet.create({
   row: { marginBottom: 22 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  label: { color: '#334155', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
+  label: { color: '#64748B', fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: 'monospace', flex: 1 },
   value: { color: '#00FF80', fontSize: 20, fontWeight: '800', fontFamily: 'monospace', letterSpacing: 1 },
   rangeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
-  rangeText: { color: '#1a3a1a', fontSize: 9, fontFamily: 'monospace' },
+  rangeText: { color: '#4a7a5a', fontSize: 9, fontFamily: 'monospace' },
 });

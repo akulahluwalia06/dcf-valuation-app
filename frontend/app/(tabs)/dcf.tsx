@@ -118,7 +118,7 @@ export default function DCFToolScreen() {
           value={inputTicker}
           onChangeText={(t: string) => setInputTicker(t.toUpperCase())}
           placeholder="AAPL  MSFT  NVDA  GOOGL  TSLA  META..."
-          placeholderTextColor="#1a3a2a"
+          placeholderTextColor="#4a7a5a"
           autoCapitalize="characters"
           autoCorrect={false}
           onSubmitEditing={handleSearch}
@@ -213,16 +213,16 @@ export default function DCFToolScreen() {
               <View style={isWide ? s.leftPanel : {}}>
                 <Panel title="BASE METRICS">
                   <Slider label={`BASE REVENUE ($M)  —  FY${snapshot.latestFiscalYear}`}
-                    value={baseRev} min={Math.max(baseRev * 0.3, 1)} max={baseRev * 3} step={baseRev * 0.01}
-                    onChange={setBaseRev} formatValue={v => `$${v.toFixed(0)}M`} />
+                    value={baseRev} min={Math.max(baseRev * 0.3, 1)} max={Math.max(baseRev * 3, 100)} step={Math.max(baseRev * 0.01, 1)}
+                    onChange={setBaseRev} formatValue={v => `$${(v).toFixed(0)}M`} />
                   <Slider label="CASH & EQUIVALENTS ($M)"
-                    value={cash} min={0} max={Math.max(cash * 3, 1000)} step={10}
+                    value={cash} min={0} max={Math.max(cash * 3, baseRev * 0.5, 1000)} step={Math.max(baseRev * 0.005, 10)}
                     onChange={setCash} formatValue={v => `$${v.toFixed(0)}M`} />
                   <Slider label="TOTAL DEBT ($M)"
-                    value={debt} min={0} max={Math.max(debt * 3, 1000)} step={10}
+                    value={debt} min={0} max={Math.max(debt * 3, baseRev * 0.5, 1000)} step={Math.max(baseRev * 0.005, 10)}
                     onChange={setDebt} formatValue={v => `$${v.toFixed(0)}M`} />
                   <Slider label="DILUTED SHARES (M)"
-                    value={shares} min={Math.max(shares * 0.5, 1)} max={shares * 2} step={shares * 0.01}
+                    value={shares} min={Math.max(shares * 0.5, 1)} max={Math.max(shares * 2, 100)} step={Math.max(shares * 0.01, 1)}
                     onChange={setShares} formatValue={v => `${v.toFixed(0)}M`} />
                 </Panel>
 
@@ -356,7 +356,7 @@ export default function DCFToolScreen() {
 
           {activeTab === 'sensitivity' && (
             <Panel title="SENSITIVITY  —  WACC × TERMINAL GROWTH RATE">
-              <Text style={{ color: '#334155', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
+              <Text style={{ color: '#64748B', fontSize: 11, marginBottom: 12, fontFamily: 'monospace' }}>
                 Green = upside  ·  Yellow = neutral  ·  Red = downside  {currentPrice ? `vs ${fmt$(currentPrice, 2)}` : ''}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -410,57 +410,57 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },
   header: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
   headerTitle: { color: '#FFFFFF', fontSize: 26, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace' },
-  headerSub: { color: '#1a3a2a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
+  headerSub: { color: '#4a7a5a', fontSize: 10, letterSpacing: 1, marginTop: 4, fontFamily: 'monospace' },
   searchRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#000', zIndex: 1, borderBottomWidth: 1, borderBottomColor: '#00FF8011' },
   searchInput: { flex: 1, backgroundColor: '#050505', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12, color: '#00FF80', fontSize: 15, borderWidth: 1, borderColor: '#00FF8033', fontFamily: 'monospace', letterSpacing: 2 },
   searchBtn: { backgroundColor: '#00FF80', borderRadius: 8, paddingHorizontal: 20, justifyContent: 'center' },
   searchBtnText: { color: '#000', fontWeight: '800', fontSize: 13, letterSpacing: 1.5, fontFamily: 'monospace' },
   quickRow: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, gap: 8, zIndex: 1 },
-  quickChip: { backgroundColor: '#050505', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#00FF8022' },
-  quickText: { color: '#00FF80', fontWeight: '700', fontSize: 12, fontFamily: 'monospace' },
+  quickChip: { backgroundColor: '#050505', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: '#00FF8033' },
+  quickText: { color: '#00CC66', fontWeight: '700', fontSize: 12, fontFamily: 'monospace' },
   errorBox: { backgroundColor: '#1a0000', margin: 12, borderRadius: 8, padding: 14, borderWidth: 1, borderColor: '#FF3B3B44', zIndex: 1 },
   errorText: { color: '#FF3B3B', fontSize: 13, fontFamily: 'monospace' },
   companyStrip: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#050505', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1, gap: 12 },
   companyTickerBox: { backgroundColor: '#001a00', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: '#00FF8033' },
   companyTicker: { color: '#00FF80', fontWeight: '800', fontSize: 14, fontFamily: 'monospace' },
-  companyName: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
-  companySub: { color: '#334155', fontSize: 11, marginTop: 2 },
-  priceLabel: { color: '#334155', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
+  companyName: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
+  companySub: { color: '#64748B', fontSize: 11, marginTop: 2 },
+  priceLabel: { color: '#64748B', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace' },
   priceVal: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
   subTabBar: { flexDirection: 'row', backgroundColor: '#000', borderBottomWidth: 1, borderBottomColor: '#00FF8022', zIndex: 1 },
   subTab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   subTabActive: { borderBottomWidth: 2, borderBottomColor: '#00FF80' },
-  subTabText: { color: '#1a3a2a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
+  subTabText: { color: '#4a7a5a', fontSize: 12, fontWeight: '700', letterSpacing: 1.5, fontFamily: 'monospace' },
   subTabTextActive: { color: '#00FF80' },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, zIndex: 1 },
   emptyTitle: { color: '#00FF80', fontSize: 16, fontWeight: '800', letterSpacing: 2, fontFamily: 'monospace', marginBottom: 12 },
-  emptySub: { color: '#1a3a2a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
+  emptySub: { color: '#4a7a5a', fontSize: 12, textAlign: 'center', lineHeight: 20, fontFamily: 'monospace' },
   scroll: { flex: 1, zIndex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
   twoCol: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
   leftPanel: { flex: 1, gap: 16, maxWidth: 420 },
   rightPanel: { flex: 1.4, gap: 16 },
   intrinsicCard: { backgroundColor: '#050505', borderWidth: 1.5, borderRadius: 12, padding: 20, marginBottom: 0 },
-  intrinsicLabel: { color: '#334155', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
+  intrinsicLabel: { color: '#64748B', fontSize: 10, letterSpacing: 2, fontFamily: 'monospace', marginBottom: 6 },
   intrinsicVal: { fontSize: 48, fontWeight: '800', fontFamily: 'monospace', lineHeight: 56 },
   methodRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#0a0a0a' },
   methodItem: { alignItems: 'center' },
-  methodLabel: { color: '#334155', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
-  methodVal: { color: '#94A3B8', fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
+  methodLabel: { color: '#64748B', fontSize: 9, letterSpacing: 1.5, fontFamily: 'monospace', marginBottom: 4 },
+  methodVal: { color: '#CBD5E1', fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
   upsideBadge: { marginTop: 14, borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
   upsideText: { fontSize: 12, fontWeight: '700', fontFamily: 'monospace' },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tvBar: { height: 14, flexDirection: 'row', borderRadius: 4, overflow: 'hidden', backgroundColor: '#111' },
   tvFill: { height: '100%' },
   tvLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  tvLabel: { color: '#334155', fontSize: 10, fontFamily: 'monospace' },
+  tvLabel: { color: '#64748B', fontSize: 10, fontFamily: 'monospace' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#001a00', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 4, marginBottom: 2 },
   th: { flex: 1, color: '#00FF80', fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
   tableRow: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 10 },
-  td: { flex: 1, color: '#475569', fontSize: 12, fontFamily: 'monospace' },
+  td: { flex: 1, color: '#94A3B8', fontSize: 12, fontFamily: 'monospace' },
   simpleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  simpleLabel: { color: '#475569', fontSize: 13, flex: 1 },
-  simpleVal: { color: '#94A3B8', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
+  simpleLabel: { color: '#94A3B8', fontSize: 13, flex: 1 },
+  simpleVal: { color: '#CBD5E1', fontSize: 13, fontWeight: '600', fontFamily: 'monospace' },
 });
 
 const p = StyleSheet.create({
@@ -471,8 +471,8 @@ const p = StyleSheet.create({
 });
 
 const k = StyleSheet.create({
-  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8022', borderRadius: 10, padding: 12 },
-  label: { color: '#334155', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
+  card: { flex: 1, minWidth: '45%', backgroundColor: '#080808', borderWidth: 1, borderColor: '#00FF8033', borderRadius: 10, padding: 12 },
+  label: { color: '#64748B', fontSize: 9, letterSpacing: 1, fontFamily: 'monospace', marginBottom: 4 },
   val: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', fontFamily: 'monospace' },
 });
 

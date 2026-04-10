@@ -21,7 +21,8 @@ export default function DCFToolScreen() {
     setTicker, setSnapshot, setSnapshotLoading, setSnapshotError, reset } = useDCFStore();
 
   const [inputTicker, setInputTicker] = useState('');
-  const [activeTab, setActiveTab] = useState<'inputs' | 'results' | 'sensitivity'>('inputs');
+  const [activeTab, setActiveTab] = useState<'inputs' | 'results' | 'sensitivity' | 'consensus'>('inputs');
+  const [consensus, setConsensus] = useState<any>(null);
 
   // Live slider assumptions
   const [phase1Growth, setPhase1Growth] = useState(0.12);
@@ -116,12 +117,18 @@ export default function DCFToolScreen() {
     const t = inputTicker.trim().toUpperCase();
     if (!t) return;
     reset();
+    setConsensus(null);
     setTicker(t);
     setSnapshotLoading(true);
     setSnapshotError(null);
     try {
-      const snap: FinancialSnapshot = await financialApi.getSnapshot(t);
-      setSnapshot(snap);
+      const [snap, cons] = await Promise.allSettled([
+        financialApi.getSnapshot(t),
+        financialApi.getConsensus(t),
+      ]);
+      if (snap.status === 'fulfilled') setSnapshot(snap.value);
+      else throw new Error((snap as any).reason?.message);
+      if (cons.status === 'fulfilled') setConsensus(cons.value);
       setActiveTab('inputs');
     } catch (e: any) {
       setSnapshotError(e.message);
@@ -225,10 +232,10 @@ export default function DCFToolScreen() {
       {/* Sub-tabs */}
       {snapshot && result && (
         <View style={s.subTabBar}>
-          {(['inputs', 'results', 'sensitivity'] as const).map(tab => (
+          {(['inputs', 'results', 'sensitivity', 'consensus'] as const).map(tab => (
             <TouchableOpacity key={tab} style={[s.subTab, activeTab === tab && s.subTabActive]} onPress={() => setActiveTab(tab)}>
               <Text style={[s.subTabText, activeTab === tab && s.subTabTextActive]}>
-                {tab.toUpperCase()}
+                {tab === 'consensus' ? 'CONSENSUS' : tab.toUpperCase()}
               </Text>
             </TouchableOpacity>
           ))}
@@ -435,6 +442,148 @@ export default function DCFToolScreen() {
               </ScrollView>
             </Panel>
           )}
+
+          {activeTab === 'consensus' && (
+            <View>
+              {!consensus && (
+                <Panel title="WALL STREET CONSENSUS">
+                  <Text style={{ color: '#94A3B8', fontSize: 15 }}>No consensus data available for this ticker.</Text>
+                </Panel>
+              )}
+              {consensus?.estimates?.length > 0 && (
+                <>
+                  {/* Source badge */}
+                  <View style={cs.sourceBadge}>
+                    <Text style={cs.sourceText}>📊 {consensus.source}  ·  {consensus.estimates[0]?.numAnalysts || '—'} analysts covering</Text>
+                  </View>
+
+                  {/* Consensus vs Your Assumptions comparison */}
+                  <Panel title="CONSENSUS vs YOUR ASSUMPTIONS">
+                    {(() => {
+                      const consGrowths = consensus.estimates
+                        .filter((e: any) => e.revenueGrowth !== null)
+                        .map((e: any) => e.revenueGrowth);
+                      const consAvgGrowth = consGrowths.length ? consGrowths.reduce((a: number, b: number) => a + b, 0) / consGrowths.length : null;
+                      const consAvgEbitM  = consensus.estimates.reduce((a: number, e: any) => a + e.ebitMargin, 0) / consensus.estimates.length;
+                      const rows = [
+                        { label: 'Avg Revenue Growth (consensus)', cons: consAvgGrowth !== null ? fmtPct(consAvgGrowth) : '—', yours: fmtPct((phase1Growth + phase2Growth) / 2), diff: consAvgGrowth !== null ? (phase1Growth + phase2Growth) / 2 - consAvgGrowth : null },
+                        { label: 'EBIT Margin (consensus avg)', cons: fmtPct(consAvgEbitM), yours: fmtPct(ebitM), diff: ebitM - consAvgEbitM },
+                        { label: 'WACC (your assumption)', cons: '—', yours: fmtPct(wacc), diff: null },
+                        { label: 'Terminal Growth Rate', cons: '—', yours: fmtPct(tgr), diff: null },
+                      ];
+                      return rows.map((r, i) => (
+                        <View key={i} style={[cs.compRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
+                          <Text style={cs.compLabel}>{r.label}</Text>
+                          <Text style={cs.compCons}>{r.cons}</Text>
+                          <Text style={cs.compYours}>{r.yours}</Text>
+                          {r.diff !== null && (
+                            <Text style={[cs.compDiff, { color: Math.abs(r.diff) < 0.02 ? '#94A3B8' : r.diff > 0 ? '#22c55e' : '#ef4444' }]}>
+                              {r.diff > 0 ? '+' : ''}{fmtPct(r.diff)}
+                            </Text>
+                          )}
+                          {r.diff === null && <Text style={cs.compDiff}>—</Text>}
+                        </View>
+                      ));
+                    })()}
+                    <View style={cs.compHeader}>
+                      <Text style={[cs.compLabel, { color: '#FF8C00' }]}>METRIC</Text>
+                      <Text style={[cs.compCons, { color: '#FF8C00' }]}>STREET</Text>
+                      <Text style={[cs.compYours, { color: '#FF8C00' }]}>YOURS</Text>
+                      <Text style={[cs.compDiff, { color: '#FF8C00' }]}>DIFF</Text>
+                    </View>
+                  </Panel>
+
+                  {/* Year-by-year estimates table */}
+                  <Panel title="FORWARD ESTIMATES  —  WALL STREET">
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View>
+                        <View style={[cs.estRow, { backgroundColor: '#1a0800' }]}>
+                          {['YEAR', 'REV AVG', 'REV LOW', 'REV HIGH', 'EBIT AVG', 'EBIT MARGIN', 'EPS AVG', 'ANALYSTS'].map(h => (
+                            <Text key={h} style={cs.estHead}>{h}</Text>
+                          ))}
+                        </View>
+                        {consensus.estimates.map((e: any, i: number) => (
+                          <View key={i} style={[cs.estRow, { backgroundColor: i % 2 === 0 ? '#050505' : '#0d0d0d' }]}>
+                            <Text style={[cs.estCell, { color: '#FF8C00', fontWeight: '700' }]}>{e.year}</Text>
+                            <Text style={cs.estCell}>{fmtM(e.revenueAvg / 1e6)}</Text>
+                            <Text style={[cs.estCell, { color: '#94A3B8' }]}>{fmtM(e.revenueLow / 1e6)}</Text>
+                            <Text style={[cs.estCell, { color: '#94A3B8' }]}>{fmtM(e.revenueHigh / 1e6)}</Text>
+                            <Text style={cs.estCell}>{fmtM(e.ebitAvg / 1e6)}</Text>
+                            <Text style={cs.estCell}>{fmtPct(e.ebitMargin)}</Text>
+                            <Text style={cs.estCell}>${e.epsAvg?.toFixed(2) || '—'}</Text>
+                            <Text style={[cs.estCell, { color: '#94A3B8' }]}>{e.numAnalysts || '—'}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </Panel>
+
+                  {/* Assumptions & Reasoning */}
+                  <Panel title="ASSUMPTIONS & REASONING">
+                    {[
+                      {
+                        label: 'Base Revenue',
+                        value: fmtM(baseRev),
+                        reasoning: `Last reported annual revenue from ${snapshot?.companyName || ticker}. This is the starting point — Year 0 of the projection.`,
+                      },
+                      {
+                        label: 'Phase 1 Growth (Yr 1–3)',
+                        value: fmtPct(phase1Growth),
+                        reasoning: `Your near-term growth assumption. Wall Street consensus implies ${
+                          consensus.estimates.slice(0, 3).filter((e: any) => e.revenueGrowth !== null).length > 0
+                            ? fmtPct(consensus.estimates.slice(0, 3).filter((e: any) => e.revenueGrowth !== null).reduce((a: number, e: any) => a + e.revenueGrowth, 0) / consensus.estimates.slice(0, 3).filter((e: any) => e.revenueGrowth !== null).length)
+                            : 'N/A'
+                        } avg over the same period.`,
+                      },
+                      {
+                        label: 'Phase 2 Growth (Yr 4–7)',
+                        value: fmtPct(phase2Growth),
+                        reasoning: 'Your long-term growth assumption as the business matures. Should converge toward the terminal growth rate.',
+                      },
+                      {
+                        label: 'EBIT Margin',
+                        value: fmtPct(ebitM),
+                        reasoning: `Operating profitability assumption held flat through the 7-year period. Consensus avg: ${fmtPct(consensus.estimates.reduce((a: number, e: any) => a + e.ebitMargin, 0) / consensus.estimates.length)}. Margin expansion/compression is a key sensitivity driver.`,
+                      },
+                      {
+                        label: 'WACC',
+                        value: fmtPct(wacc),
+                        reasoning: 'Weighted Average Cost of Capital — the discount rate applied to future cash flows. Higher WACC = lower intrinsic value. Reflects business risk, leverage, and cost of equity via CAPM.',
+                      },
+                      {
+                        label: 'Terminal Growth Rate',
+                        value: fmtPct(tgr),
+                        reasoning: 'Perpetuity growth rate after Year 7. Should be at or below long-run nominal GDP growth (historically ~2–3%). Higher TGR dramatically increases terminal value.',
+                      },
+                      {
+                        label: 'Exit EV/EBITDA Multiple',
+                        value: `${exitMult}x`,
+                        reasoning: 'Applied to Year 7 EBITDA to estimate terminal value. Blended 50/50 with the Gordon Growth Model. Anchored to current/historical sector multiples.',
+                      },
+                      {
+                        label: 'Tax Rate',
+                        value: '21%',
+                        reasoning: 'US federal corporate tax rate. Applied to EBIT to derive NOPAT (Net Operating Profit After Tax), the pre-cash-flow earnings measure.',
+                      },
+                      {
+                        label: 'Terminal Value Method',
+                        value: 'GGM + Exit Multiple (50/50)',
+                        reasoning: 'Two independent methods blended to reduce single-model bias. GGM is sensitive to TGR; exit multiple is sensitive to sector sentiment. Blending reduces the impact of either extreme.',
+                      },
+                    ].map((row, i) => (
+                      <View key={i} style={[cs.reasonRow, { borderTopWidth: i === 0 ? 0 : 1 }]}>
+                        <View style={cs.reasonTop}>
+                          <Text style={cs.reasonLabel}>{row.label}</Text>
+                          <Text style={cs.reasonValue}>{row.value}</Text>
+                        </View>
+                        <Text style={cs.reasonText}>{row.reasoning}</Text>
+                      </View>
+                    ))}
+                  </Panel>
+                </>
+              )}
+            </View>
+          )}
         </ScrollView>
       )}
     </KeyboardAvoidingView>
@@ -461,6 +610,25 @@ function KPI({ label, val, accent }: { label: string; val: string; accent?: bool
     </View>
   );
 }
+
+const cs = StyleSheet.create({
+  sourceBadge: { backgroundColor: '#1a0800', borderRadius: 8, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: '#FF8C0033' },
+  sourceText: { color: '#FF8C00', fontSize: 13, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  compHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#1a0800', marginTop: 8, borderRadius: 4 },
+  compRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
+  compLabel: { flex: 2, color: '#CBD5E1', fontSize: 13, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  compCons: { flex: 1, color: '#94A3B8', fontSize: 13, textAlign: 'right', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  compYours: { flex: 1, color: '#FF8C00', fontSize: 13, fontWeight: '700', textAlign: 'right', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  compDiff: { flex: 1, fontSize: 13, fontWeight: '700', textAlign: 'right', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  estRow: { flexDirection: 'row' },
+  estHead: { width: 100, color: '#FF8C00', fontSize: 12, fontWeight: '700', padding: 8, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  estCell: { width: 100, color: '#CBD5E1', fontSize: 13, padding: 8, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  reasonRow: { paddingVertical: 14, borderTopColor: '#1a0800' },
+  reasonTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
+  reasonLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', flex: 1, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  reasonValue: { color: '#FF8C00', fontSize: 17, fontWeight: '800', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+  reasonText: { color: '#94A3B8', fontSize: 14, lineHeight: 20, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' },
+});
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },

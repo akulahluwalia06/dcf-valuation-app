@@ -30,6 +30,8 @@ export const financialApi = {
     api.get(`/api/financial/${ticker}/snapshot`).then(r => r.data),
   getQuote: (ticker: string) =>
     api.get(`/api/financial/${ticker}/quote`).then(r => r.data),
+  getConsensus: (ticker: string): Promise<any> =>
+    api.get(`/api/financial/${ticker}/consensus`).then(r => r.data),
 };
 
 export const dcfApi = {

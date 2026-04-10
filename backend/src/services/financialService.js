@@ -210,4 +210,38 @@ async function getQuote(rawTicker) {
   return (data.results || [])[0] || {};
 }
 
-module.exports = { getFinancialSnapshot, getQuote };
+// ── Consensus analyst estimates ──────────────────────────────
+async function getConsensus(rawTicker) {
+  const ticker  = rawTicker.toUpperCase();
+  const symbol  = isNonUS(ticker) ? baseSymbol(ticker) : ticker;
+
+  const data = await fmpGet(`/analyst-estimates?symbol=${symbol}&period=annual&limit=5`);
+  if (!Array.isArray(data) || data.length === 0) return { estimates: [], source: 'FMP' };
+
+  // Sort ascending by date
+  const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Derive implied YoY revenue growth from the estimates
+  const estimates = sorted.map((r, i) => {
+    const prev = i > 0 ? sorted[i - 1].revenueAvg : null;
+    return {
+      year:             r.date.substring(0, 4),
+      revenueAvg:       r.revenueAvg       || 0,
+      revenueLow:       r.revenueLow       || 0,
+      revenueHigh:      r.revenueHigh      || 0,
+      ebitAvg:          r.ebitAvg          || 0,
+      ebitdaAvg:        r.ebitdaAvg        || 0,
+      netIncomeAvg:     r.netIncomeAvg     || 0,
+      epsAvg:           r.epsAvg           || 0,
+      epsLow:           r.epsLow           || 0,
+      epsHigh:          r.epsHigh          || 0,
+      ebitMargin:       r.revenueAvg ? (r.ebitAvg || 0) / r.revenueAvg : 0,
+      revenueGrowth:    prev ? (r.revenueAvg - prev) / prev : null,
+      numAnalysts:      r.numAnalystsRevenue || r.numAnalystsEps || 0,
+    };
+  });
+
+  return { estimates, symbol, source: 'FMP / Wall Street Consensus' };
+}
+
+module.exports = { getFinancialSnapshot, getQuote, getConsensus };

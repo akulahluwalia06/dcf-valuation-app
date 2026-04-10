@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { validateTicker } = require('../middleware/validate');
-const { getFinancialSnapshot, getQuote } = require('../services/financialService');
+const { getFinancialSnapshot, getQuote, getConsensus } = require('../services/financialService');
 
 router.get('/:ticker/snapshot', validateTicker, async (req, res) => {
   try {
@@ -23,6 +23,16 @@ router.get('/:ticker/quote', validateTicker, async (req, res) => {
     res.json(quote);
   } catch (err) {
     res.status(502).json({ error: 'Failed to fetch quote', detail: err.message });
+  }
+});
+
+router.get('/:ticker/consensus', validateTicker, async (req, res) => {
+  try {
+    const consensus = await getConsensus(req.ticker);
+    res.json(consensus);
+  } catch (err) {
+    console.error(`Consensus error for ${req.ticker}:`, err.message);
+    res.status(502).json({ error: 'Failed to fetch consensus estimates', detail: err.message });
   }
 });
 

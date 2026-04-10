@@ -7,26 +7,13 @@
  *  - Fallback: if Polygon returns no price/revenue, retry via Yahoo Finance
  */
 
-const axios   = require('axios');
-const FinancialData = require('../models/FinancialData');
+const axios = require('axios');
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function n(v) {
   if (v == null) return 0;
   if (typeof v === 'object' && 'raw' in v) return Number(v.raw) || 0;
   return Number(v) || 0;
-}
-
-async function getCached(ticker, type, fetchFn, ttlHours = 24) {
-  const existing = await FinancialData.findOne({ ticker, type });
-  if (existing) return existing.data;
-  const fresh = await fetchFn();
-  await FinancialData.findOneAndUpdate(
-    { ticker, type },
-    { data: fresh, fetchedAt: new Date(), expiresAt: new Date(Date.now() + ttlHours * 3600000) },
-    { upsert: true, new: true }
-  );
-  return fresh;
 }
 
 // Detect non-US tickers that Polygon doesn't cover on the free tier
@@ -177,37 +164,33 @@ async function snapshotFromYahoo(ticker) {
 async function getFinancialSnapshot(rawTicker) {
   const ticker = rawTicker.toUpperCase();
 
-  return getCached(ticker, 'snapshot_v2', async () => {
-    // Route Canadian / international tickers straight to Yahoo
-    if (isNonUS(ticker)) {
-      return snapshotFromYahoo(ticker);
-    }
+  // Always fetch live — no caching so price and financials are always current
+  if (isNonUS(ticker)) {
+    return snapshotFromYahoo(ticker);
+  }
 
-    // Try Polygon first for US tickers
-    const snap = await snapshotFromPolygon(ticker);
+  // Try Polygon first for US tickers
+  const snap = await snapshotFromPolygon(ticker);
 
-    // If Polygon returned no useful data, fall back to Yahoo
-    if (!snap.currentPrice && !snap.snapshot.revenue) {
-      return snapshotFromYahoo(ticker);
-    }
+  // If Polygon returned no useful data, fall back to Yahoo
+  if (!snap.currentPrice && !snap.snapshot.revenue) {
+    return snapshotFromYahoo(ticker);
+  }
 
-    return snap;
-  });
+  return snap;
 }
 
 async function getQuote(rawTicker) {
   const ticker = rawTicker.toUpperCase();
-  return getCached(ticker, 'quote_v2', async () => {
-    if (isNonUS(ticker)) {
-      const q = await yf.quote(ticker);
-      return q || {};
-    }
-    const { data } = await axios.get(
-      `${POLY_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${process.env.POLYGON_API_KEY}`,
-      { timeout: 10000 }
-    );
-    return (data.results || [])[0] || {};
-  }, 5 / 60);
+  if (isNonUS(ticker)) {
+    const q = await yf.quote(ticker);
+    return q || {};
+  }
+  const { data } = await axios.get(
+    `${POLY_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${process.env.POLYGON_API_KEY}`,
+    { timeout: 10000 }
+  );
+  return (data.results || [])[0] || {};
 }
 
 module.exports = { getFinancialSnapshot, getQuote };

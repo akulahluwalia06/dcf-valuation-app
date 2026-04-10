@@ -229,40 +229,50 @@ export default function DCFToolScreen() {
                 <Panel title="BASE METRICS">
                   <Slider label={`BASE REVENUE ($M)  —  FY${snapshot.latestFiscalYear}`}
                     value={baseRev} min={revRange.min} max={revRange.max} step={revRange.step}
-                    onChange={setBaseRev} formatValue={v => `$${v.toFixed(0)}M`} />
+                    onChange={setBaseRev} formatValue={v => `$${v.toFixed(0)}M`}
+                    parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                   <Slider label="CASH & EQUIVALENTS ($M)"
                     value={cash} min={cashRange.min} max={cashRange.max} step={cashRange.step}
-                    onChange={setCash} formatValue={v => `$${v.toFixed(0)}M`} />
+                    onChange={setCash} formatValue={v => `$${v.toFixed(0)}M`}
+                    parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                   <Slider label="TOTAL DEBT ($M)"
                     value={debt} min={debtRange.min} max={debtRange.max} step={debtRange.step}
-                    onChange={setDebt} formatValue={v => `$${v.toFixed(0)}M`} />
+                    onChange={setDebt} formatValue={v => `$${v.toFixed(0)}M`}
+                    parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                   <Slider label="DILUTED SHARES (M)"
                     value={shares} min={sharesRange.min} max={sharesRange.max} step={sharesRange.step}
-                    onChange={setShares} formatValue={v => `${v.toFixed(0)}M`} />
+                    onChange={setShares} formatValue={v => `${v.toFixed(0)}M`}
+                    parseValue={s => parseFloat(s.replace(/[^0-9.]/g, ''))} />
                 </Panel>
 
                 <Panel title="GROWTH ASSUMPTIONS">
                   <Slider label="PHASE 1 GROWTH (YR 1–3)"
                     value={phase1Growth} min={0.02} max={0.50} step={0.005}
-                    onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                    onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                    parseValue={s => parseFloat(s.replace('%','')) / 100} />
                   <Slider label="PHASE 2 GROWTH (YR 4–7)"
                     value={phase2Growth} min={0.01} max={0.30} step={0.005}
-                    onChange={setPhase2Growth} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                    onChange={setPhase2Growth} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                    parseValue={s => parseFloat(s.replace('%','')) / 100} />
                   <Slider label="TERMINAL GROWTH RATE"
                     value={tgr} min={0.01} max={0.06} step={0.005}
-                    onChange={setTgr} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                    onChange={setTgr} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                    parseValue={s => parseFloat(s.replace('%','')) / 100} />
                 </Panel>
 
                 <Panel title="DISCOUNT RATE & MARGINS">
                   <Slider label="WACC"
                     value={wacc} min={0.06} max={0.20} step={0.005}
-                    onChange={setWacc} formatValue={v => `${(v * 100).toFixed(1)}%`} />
+                    onChange={setWacc} formatValue={v => `${(v * 100).toFixed(1)}%`}
+                    parseValue={s => parseFloat(s.replace('%','')) / 100} />
                   <Slider label="EBIT MARGIN"
                     value={ebitM} min={0.02} max={0.60} step={0.01}
-                    onChange={setEbitM} formatValue={v => `${(v * 100).toFixed(0)}%`} />
+                    onChange={setEbitM} formatValue={v => `${(v * 100).toFixed(0)}%`}
+                    parseValue={s => parseFloat(s.replace('%','')) / 100} />
                   <Slider label="EXIT EV/EBITDA MULTIPLE"
                     value={exitMult} min={5} max={60} step={1}
-                    onChange={setExitMult} formatValue={v => `${v}x`} />
+                    onChange={setExitMult} formatValue={v => `${v}x`}
+                    parseValue={s => parseFloat(s.replace('x',''))} />
                 </Panel>
               </View>
 

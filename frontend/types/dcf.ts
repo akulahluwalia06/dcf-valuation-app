@@ -83,21 +83,6 @@ export interface SensitivityRow {
   values: number[];
 }
 
-export interface PANWModel {
-  ticker: string;
-  companyName: string;
-  currentPrice: number;
-  modelDate: string;
-  assumptions: DCFAssumptions;
-  historical: HistoricalYear[];
-  dcf: DCFResult;
-  scenarios: ScenarioResult[];
-  sensitivity: {
-    grid: SensitivityRow[];
-    tgrValues: number[];
-    waccOffsets: number[];
-  };
-}
 
 export interface FinancialSnapshot {
   ticker: string;

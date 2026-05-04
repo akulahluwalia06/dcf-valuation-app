@@ -55,18 +55,11 @@ export default function HomeScreen() {
         {/* Tool cards */}
         <Text style={s.sectionLabel}>▸ TOOLS</Text>
         <View style={s.cardRow}>
-          <TouchableOpacity style={[s.card, { borderColor: '#FF8C0033' }]} onPress={() => router.push('/(tabs)/panw')} activeOpacity={0.8}>
-            <View style={s.cardIcon}><Ionicons name="shield-checkmark-outline" size={24} color="#FF8C00" /></View>
-            <Text style={[s.cardTitle, { color: '#FF8C00' }]}>PANW MODEL</Text>
-            <Text style={s.cardDesc}>Pre-built Palo Alto Networks DCF — interactive sliders, live recalculation, 6 analysis tabs</Text>
-            <View style={[s.chip, { borderColor: '#FF8C0044' }]}><Text style={[s.chipText, { color: '#FF8C00' }]}>LIVE DATA</Text></View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[s.card, { borderColor: '#0EA5E933' }]} onPress={() => router.push('/(tabs)/dcf')} activeOpacity={0.8}>
-            <View style={s.cardIcon}><Ionicons name="calculator-outline" size={24} color="#0EA5E9" /></View>
-            <Text style={[s.cardTitle, { color: '#0EA5E9' }]}>DCF TOOL</Text>
-            <Text style={s.cardDesc}>Model any stock — auto-populate from live financials, instant sensitivity analysis</Text>
-            <View style={[s.chip, { borderColor: '#0EA5E944' }]}><Text style={[s.chipText, { color: '#0EA5E9' }]}>ANY TICKER</Text></View>
+          <TouchableOpacity style={[s.card, { borderColor: '#FF8C0033' }]} onPress={() => router.push('/(tabs)/dcf')} activeOpacity={0.8}>
+            <View style={s.cardIcon}><Ionicons name="calculator-outline" size={24} color="#FF8C00" /></View>
+            <Text style={[s.cardTitle, { color: '#FF8C00' }]}>DCF TOOL</Text>
+            <Text style={s.cardDesc}>Model any stock — auto-populate from live financials, instant sensitivity analysis, Wall Street consensus</Text>
+            <View style={[s.chip, { borderColor: '#FF8C0044' }]}><Text style={[s.chipText, { color: '#FF8C00' }]}>ANY TICKER</Text></View>
           </TouchableOpacity>
         </View>
 

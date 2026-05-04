@@ -28,14 +28,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="panw"
-        options={{
-          title: 'PANW',
-          tabBarIcon: ({ color, size }: { color: string; size: number }) =>
-            <Ionicons name="analytics-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="dcf"
         options={{
           title: 'DCF TOOL',

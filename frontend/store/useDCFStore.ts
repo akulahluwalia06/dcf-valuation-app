@@ -1,17 +1,8 @@
 import { create } from 'zustand';
-import { DCFAssumptions, DCFResult, PANWModel, FinancialSnapshot } from '../types/dcf';
+import { DCFAssumptions, DCFResult, FinancialSnapshot } from '../types/dcf';
 import { calculateDCF } from '../utils/dcfEngine';
 
 interface DCFStore {
-  // PANW model
-  panwModel: PANWModel | null;
-  panwLoading: boolean;
-  panwError: string | null;
-  setPanwModel: (model: PANWModel) => void;
-  setPanwLoading: (v: boolean) => void;
-  setPanwError: (e: string | null) => void;
-
-  // Generic DCF tool
   ticker: string;
   snapshot: FinancialSnapshot | null;
   assumptions: DCFAssumptions | null;
@@ -30,13 +21,6 @@ interface DCFStore {
 }
 
 export const useDCFStore = create<DCFStore>((set, get) => ({
-  panwModel: null,
-  panwLoading: false,
-  panwError: null,
-  setPanwModel: (model) => set({ panwModel: model }),
-  setPanwLoading: (v) => set({ panwLoading: v }),
-  setPanwError: (e) => set({ panwError: e }),
-
   ticker: '',
   snapshot: null,
   assumptions: null,

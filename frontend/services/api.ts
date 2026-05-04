@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DCFAssumptions, PANWModel, FinancialSnapshot } from '../types/dcf';
+import { DCFAssumptions, FinancialSnapshot } from '../types/dcf';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -18,12 +18,6 @@ api.interceptors.response.use(
   }
 );
 
-export const panwApi = {
-  getModel: (): Promise<PANWModel> =>
-    api.get('/api/panw/model').then(r => r.data),
-  getAssumptions: () =>
-    api.get('/api/panw/assumptions').then(r => r.data),
-};
 
 export const financialApi = {
   getSnapshot: (ticker: string): Promise<FinancialSnapshot> =>

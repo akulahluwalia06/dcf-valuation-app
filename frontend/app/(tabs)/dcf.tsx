@@ -27,6 +27,7 @@ export default function DCFToolScreen() {
   // Live slider assumptions
   const [phase1Growth, setPhase1Growth] = useState(0.12);
   const [phase2Growth, setPhase2Growth] = useState(0.08);
+  const [growthIsDefault, setGrowthIsDefault] = useState(false);
   const [tgr, setTgr]       = useState(0.03);
   const [wacc, setWacc]     = useState(0.10);
   const [ebitM, setEbitM]   = useState(0.20);
@@ -63,8 +64,10 @@ export default function DCFToolScreen() {
       const newest = hist[hist.length - 1].revenue;
       const years  = hist.length - 1;
       historicalGrowth = Math.pow(newest / oldest, 1 / years) - 1;
-      // Clamp to reasonable range
       historicalGrowth = Math.min(Math.max(historicalGrowth, 0.02), 0.60);
+      setGrowthIsDefault(false);
+    } else {
+      setGrowthIsDefault(true);
     }
     // Phase 1 anchored to historical CAGR, phase 2 = roughly half that
     setPhase1Growth(parseFloat(historicalGrowth.toFixed(4)));
@@ -299,6 +302,14 @@ export default function DCFToolScreen() {
                 </Panel>
 
                 <Panel title="GROWTH ASSUMPTIONS">
+                  {growthIsDefault && (
+                    <View style={{ backgroundColor: '#2a1500', borderRadius: 8, padding: 12, marginBottom: 14, borderLeftWidth: 3, borderLeftColor: '#FF8C00' }}>
+                      <Text style={{ color: '#FF8C00', fontSize: 13, fontWeight: '700', marginBottom: 4 }}>⚠ GROWTH RATE IS A DEFAULT ESTIMATE</Text>
+                      <Text style={{ color: '#CBD5E1', fontSize: 13, lineHeight: 19 }}>
+                        Multi-year historical revenue data isn't available for this ticker, so growth is set to a default of 12% / 6%. Adjust these sliders to match analyst estimates or your own research before relying on the valuation.
+                      </Text>
+                    </View>
+                  )}
                   <Slider label="PHASE 1 GROWTH (YR 1–3)"
                     value={phase1Growth} min={0.02} max={0.50} step={0.005}
                     onChange={setPhase1Growth} formatValue={v => `${(v * 100).toFixed(1)}%`}

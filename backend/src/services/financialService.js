@@ -25,9 +25,10 @@ function n(v) { return (typeof v === 'number' && isFinite(v) ? v : 0); }
 async function fmpGet(path) {
   if (!FMP_KEY) throw new Error('FMP_API_KEY not configured on server');
   const sep = path.includes('?') ? '&' : '?';
-  const { data } = await axios.get(`${FMP_BASE}${path}${sep}apikey=${FMP_KEY}`, { timeout: 15000 });
+  const res = await axios.get(`${FMP_BASE}${path}${sep}apikey=${FMP_KEY}`, { timeout: 15000, validateStatus: s => s < 500 });
+  if (res.status === 402) { const e = new Error('FMP_PREMIUM_REQUIRED'); e.status = 402; throw e; }
+  const data = res.data;
   if (typeof data === 'string' && data.includes('limit')) throw new Error('FMP_RATE_LIMIT');
-  if (typeof data === 'string' && data.includes('Premium')) throw new Error('FMP_PREMIUM_REQUIRED');
   if (typeof data === 'object' && data['Error Message']) throw new Error('FMP_AUTH_ERROR: ' + data['Error Message']);
   return data;
 }
@@ -36,8 +37,7 @@ async function fmpGet(path) {
 async function polyPrice(ticker) {
   if (!POLY_KEY) return null;
   try {
-    const sep = '/v2/aggs/ticker/' + ticker + '/prev?adjusted=true';
-    const { data } = await axios.get(`${POLY_BASE}${sep}&apiKey=${POLY_KEY}`, { timeout: 8000 });
+    const { data } = await axios.get(`${POLY_BASE}/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=${POLY_KEY}`, { timeout: 8000 });
     const r = (data.results || [])[0];
     return r ? { price: n(r.c), volume: n(r.v) } : null;
   } catch { return null; }
@@ -45,17 +45,36 @@ async function polyPrice(ticker) {
 
 // ── Full snapshot from FMP ───────────────────────────────────
 async function snapshotFromFMP(symbol, originalTicker) {
-  const [profiles, incomes, cashflows, balances] = await Promise.all([
-    fmpGet(`/profile?symbol=${symbol}`),
+  // Try annual statements first; fall back to TTM-only for non-US primary listings
+  const profileP  = fmpGet(`/profile?symbol=${symbol}`);
+  const annualP   = Promise.all([
     fmpGet(`/income-statement?symbol=${symbol}&limit=4`),
     fmpGet(`/cash-flow-statement?symbol=${symbol}&limit=4`),
     fmpGet(`/balance-sheet-statement?symbol=${symbol}&limit=1`),
-  ]);
+  ]).catch(e => e.status === 402 ? null : Promise.reject(e));
 
-  const profile  = (Array.isArray(profiles)  ? profiles[0]  : profiles)  || {};
-  const income   = (Array.isArray(incomes)   ? incomes      : []);
-  const cashflow = (Array.isArray(cashflows) ? cashflows    : []);
-  const balance  = (Array.isArray(balances)  ? balances[0]  : balances)  || {};
+  const [profiles, annualResult] = await Promise.all([profileP, annualP]);
+
+  let income = [], cashflow = [], balance = {};
+
+  if (annualResult) {
+    // Annual data available
+    income   = Array.isArray(annualResult[0]) ? annualResult[0] : [];
+    cashflow = Array.isArray(annualResult[1]) ? annualResult[1] : [];
+    balance  = (Array.isArray(annualResult[2]) ? annualResult[2][0] : annualResult[2]) || {};
+  } else {
+    // Annual locked (402) — fetch TTM single-year snapshots
+    const [ttmI, ttmCF, ttmBS] = await Promise.all([
+      fmpGet(`/income-statement-ttm?symbol=${symbol}`).catch(() => []),
+      fmpGet(`/cash-flow-statement-ttm?symbol=${symbol}`).catch(() => []),
+      fmpGet(`/balance-sheet-statement-ttm?symbol=${symbol}`).catch(() => []),
+    ]);
+    income   = Array.isArray(ttmI)  ? ttmI  : [ttmI  || {}];
+    cashflow = Array.isArray(ttmCF) ? ttmCF : [ttmCF || {}];
+    balance  = (Array.isArray(ttmBS) ? ttmBS[0] : ttmBS) || {};
+  }
+
+  const profile  = (Array.isArray(profiles) ? profiles[0] : profiles) || {};
 
   const latest   = income[0]   || {};
   const latestCF = cashflow[0] || {};
